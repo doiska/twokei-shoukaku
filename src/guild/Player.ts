@@ -19,7 +19,8 @@ export interface PlayOptions {
         startTime?: number;
         endTime?: number;
         volume?: number;
-    }
+    },
+    info?: any;
 }
 
 export interface PlayPayload {
@@ -138,9 +139,9 @@ export interface WebSocketClosedEvent extends PlayerEvent {
 export interface PlayerUpdate {
     op: OPCodes.PLAYER_UPDATE;
     state: {
-      connected: boolean;
-      position?: number;
-      time: number;
+        connected: boolean;
+        position?: number;
+        time: number;
     };
     guildId: string;
 }
@@ -148,14 +149,14 @@ export interface PlayerUpdate {
 export interface FilterOptions {
     volume?: number;
     equalizer?: Band[];
-    karaoke?: KaraokeSettings|null;
-    timescale?: TimescaleSettings|null;
-    tremolo?: FreqSettings|null;
-    vibrato?: FreqSettings|null;
-    rotation?: RotationSettings|null;
-    distortion?: DistortionSettings|null;
-    channelMix?: ChannelMixSettings|null;
-    lowPass?: LowPassSettings|null;
+    karaoke?: KaraokeSettings | null;
+    timescale?: TimescaleSettings | null;
+    tremolo?: FreqSettings | null;
+    vibrato?: FreqSettings | null;
+    rotation?: RotationSettings | null;
+    distortion?: DistortionSettings | null;
+    channelMix?: ChannelMixSettings | null;
+    lowPass?: LowPassSettings | null;
 }
 
 export declare interface Player {
@@ -229,7 +230,11 @@ export class Player extends EventEmitter {
     /**
      * ID of current track
      */
-    public track: string|null;
+    public track: string | null;
+    /**
+     * Player info from Lavalink
+     */
+    public info: any | null;
     /**
      * Global volume of the player
      */
@@ -261,6 +266,7 @@ export class Player extends EventEmitter {
         this.node = node;
         this.track = null;
         this.volume = 100;
+        this.info = null;
         this.paused = false;
         this.position = 0;
         this.ping = 0;
@@ -334,6 +340,7 @@ export class Player extends EventEmitter {
             if (volume) playerOptions.volume = volume;
         }
         this.track = playable.track;
+        this.info = playable.info;
         if (playerOptions.paused) this.paused = playerOptions.paused;
         if (playerOptions.position) this.position = playerOptions.position;
         if (playerOptions.volume) this.volume = playerOptions.volume;
@@ -396,7 +403,7 @@ export class Player extends EventEmitter {
      * Sets the filter volume of the player
      * @param volume Target volume 0.0-5.0
      */
-    public async setFilterVolume(volume: number):  Promise<void> {
+    public async setFilterVolume(volume: number): Promise<void> {
         this.filters.volume = volume;
         await this.setFilters(this.filters);
     }
@@ -531,7 +538,7 @@ export class Player extends EventEmitter {
      * If you want to update the whole player yourself, sends raw update player info to lavalink
      */
     public async update(updatePlayer: UpdatePlayerInfo): Promise<void> {
-        const data = { ...updatePlayer, ...{ guildId: this.guildId, sessionId: this.node.sessionId! }};
+        const data = { ...updatePlayer, ...{ guildId: this.guildId, sessionId: this.node.sessionId! } };
         await this.node.rest.updatePlayer(data);
         if (updatePlayer.playerOptions) {
             const options = updatePlayer.playerOptions;

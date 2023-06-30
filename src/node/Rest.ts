@@ -24,7 +24,7 @@ export interface Track {
         identifier: string;
         isSeekable: boolean;
         author: string;
-        length: number;
+        duration: number;
         isStream: boolean;
         position: number;
         title: string;

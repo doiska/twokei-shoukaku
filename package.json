@@ -1,7 +1,7 @@
 {
-  "name": "shoukaku",
-  "version": "4.0.0-dev",
-  "description": "A stable and updated wrapper around Lavalink",
+  "name": "@moscowcity/shoukaku",
+  "version": "4.0.20",
+  "description": "A forked module of shoukaku with player.info option",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -35,10 +35,16 @@
     "npm": ">=7.0.0"
   },
   "author": "Saya",
+  "contributors": [
+    {
+      "email": "blagochevk@mail.ru",
+      "name": "Kirill Blagochev"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Deivu/Shoukaku"
+    "url": "https://github.com/MoscowMusic/shoukaku"
   },
   "dependencies": {
     "ws": "^8.13.0"
