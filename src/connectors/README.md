@@ -26,9 +26,3 @@ new Shoukaku(new Connectors.OceanicJS(client), servers, options)
 ## Implementing your own
 
 > Check **DiscordJS.ts** or **Eris.ts** inside libs folder for a detailed explanation on how to support a library
-
-> And Submit a PR so other people don't need to do it themselves, yay!
-
-## Support
-
-For questions on how to do so, just ask at my support server at [HERE](https://discord.gg/FVqbtGu) (#Development)

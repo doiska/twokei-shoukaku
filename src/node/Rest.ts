@@ -1,7 +1,7 @@
-import { Node, NodeInfo, NodeStats } from './Node';
 import { NodeOption } from '../Shoukaku';
 import { Versions } from '../Constants';
 import { FilterOptions } from '../guild/Player';
+import { Node, NodeInfo, NodeStats } from './Node';
 
 export type Severity = 'common' | 'suspicious' | 'fault';
 
@@ -11,7 +11,7 @@ export enum LoadType {
     SEARCH = 'search',
     EMPTY = 'empty',
     ERROR = 'error'
-}
+};
 
 export interface Track {
     encoded: string;
@@ -27,50 +27,50 @@ export interface Track {
         artworkUrl?: string;
         isrc?: string;
         sourceName: string;
-    }
+    };
     pluginInfo: unknown;
-}
+};
 
 export interface Playlist {
     encoded: string;
     info: {
         name: string;
         selectedTrack: number;
-    }
+    };
     pluginInfo: unknown;
     tracks: Track[];
-}
+};
 
 export interface Exception {
     message: string;
     severity: Severity;
     cause: string;
-}
+};
 
 export interface TrackResult {
     loadType: LoadType.TRACK,
     data: Track
-}
+};
 
 export interface PlaylistResult {
     loadType: LoadType.PLAYLIST,
     data: Playlist
-}
+};
 
 export interface SearchResult {
     loadType: LoadType.SEARCH,
     data: Track[]
-}
+};
 
 export interface EmptyResult {
     loadType: LoadType.EMPTY,
     data: {}
-}
+};
 
 export interface ErrorResult {
     loadType: LoadType.ERROR,
     data: Exception
-}
+};
 
 export type LavalinkResponse = TrackResult | PlaylistResult | SearchResult | EmptyResult | ErrorResult;
 
@@ -78,7 +78,7 @@ export interface Address {
     address: string;
     failingTimestamp: number;
     failingTime: string;
-}
+};
 
 export interface RoutePlanner {
     class: null | 'RotatingIpRoutePlanner' | 'NanoIpRoutePlanner' | 'RotatingNanoIpRoutePlanner' | 'BalancingIpRoutePlanner';
@@ -94,7 +94,7 @@ export interface RoutePlanner {
         blockIndex: string;
         currentAddressIndex: string;
     };
-}
+};
 
 export interface LavalinkPlayerVoice {
     token: string;
@@ -102,9 +102,9 @@ export interface LavalinkPlayerVoice {
     sessionId: string;
     connected?: boolean;
     ping?: number
-}
+};
 
-export interface LavalinkPlayerVoiceOptions extends Omit<LavalinkPlayerVoice, 'connected'|'ping'> {}
+export interface LavalinkPlayerVoiceOptions extends Omit<LavalinkPlayerVoice, 'connected' | 'ping'> { };
 
 export interface LavalinkPlayer {
     guildId: string,
@@ -113,10 +113,10 @@ export interface LavalinkPlayer {
     paused: boolean;
     voice: LavalinkPlayerVoice
     filters: FilterOptions
-}
+};
 
 export interface UpdatePlayerOptions {
-    encodedTrack?: string|null;
+    encodedTrack?: string | null;
     identifier?: string;
     position?: number;
     endTime?: number;
@@ -124,18 +124,18 @@ export interface UpdatePlayerOptions {
     paused?: boolean;
     filters?: FilterOptions;
     voice?: LavalinkPlayerVoiceOptions;
-}
+};
 
 export interface UpdatePlayerInfo {
     guildId: string;
     playerOptions: UpdatePlayerOptions;
     noReplace?: boolean;
-}
+};
 
 export interface SessionInfo {
     resumingKey?: string;
     timeout: number;
-}
+};
 
 interface FetchOptions {
     endpoint: string;
@@ -146,14 +146,14 @@ interface FetchOptions {
         body?: Record<string, unknown>;
         [key: string]: unknown;
     };
-}
+};
 
 interface FinalFetchOptions {
     method: string;
     headers: Record<string, string>;
     signal: AbortSignal;
     body?: string;
-}
+};
 
 /**
  * Wrapper around Lavalink REST API
@@ -183,17 +183,18 @@ export class Rest {
      * @param options.auth Credentials to access Lavalnk
      * @param options.secure Weather to use secure protocols or not
      * @param options.group Group of this node
+     * @param options.sessionId SessionId to reconnect
      */
     constructor(node: Node, options: NodeOption) {
         this.node = node;
         this.url = `${options.secure ? 'https' : 'http'}://${options.url}`;
         this.version = `/v${Versions.REST_VERSION}`;
         this.auth = options.auth;
-    }
+    };
 
     protected get sessionId(): string {
         return this.node.sessionId!;
-    }
+    };
 
     /**
      * Resolve a track
@@ -203,10 +204,11 @@ export class Rest {
     public resolve(identifier: string): Promise<LavalinkResponse | undefined> {
         const options = {
             endpoint: '/loadtracks',
-            options: { params: { identifier }}
+            options: { params: { identifier } }
         };
+
         return this.fetch(options);
-    }
+    };
 
     /**
      * Decode a track
@@ -216,10 +218,11 @@ export class Rest {
     public decode(track: string): Promise<Track | undefined> {
         const options = {
             endpoint: '/decodetrack',
-            options: { params: { track }}
+            options: { params: { track } }
         };
+
         return this.fetch<Track>(options);
-    }
+    };
 
     /**
      * Gets all the player with the specified sessionId
@@ -230,8 +233,9 @@ export class Rest {
             endpoint: `/sessions/${this.sessionId}/players`,
             options: {}
         };
+
         return await this.fetch<LavalinkPlayer[]>(options) ?? [];
-    }
+    };
 
     /**
      * Gets all the player with the specified sessionId
@@ -242,8 +246,9 @@ export class Rest {
             endpoint: `/sessions/${this.sessionId}/players/${guildId}`,
             options: {}
         };
+
         return this.fetch(options);
-    }
+    };
 
     /**
      * Updates a Lavalink player
@@ -260,8 +265,9 @@ export class Rest {
                 body: data.playerOptions as Record<string, unknown>
             }
         };
+
         return this.fetch<LavalinkPlayer>(options);
-    }
+    };
 
     /**
      * Deletes a Lavalink player
@@ -272,8 +278,9 @@ export class Rest {
             endpoint: `/sessions/${this.sessionId}/players/${guildId}`,
             options: { method: 'DELETE' }
         };
+
         await this.fetch(options);
-    }
+    };
 
     /**
      * Updates the session with a resume boolean and timeout
@@ -290,8 +297,9 @@ export class Rest {
                 body: { resuming, timeout }
             }
         };
+
         return this.fetch(options);
-    }
+    };
 
     /**
      * Gets the status of this node
@@ -302,8 +310,9 @@ export class Rest {
             endpoint: '/stats',
             options: {}
         };
+
         return this.fetch(options);
-    }
+    };
 
     /**
      * Get routeplanner status from Lavalink
@@ -314,8 +323,9 @@ export class Rest {
             endpoint: '/routeplanner/status',
             options: {}
         };
+
         return this.fetch(options);
-    }
+    };
 
     /**
      * Release blacklisted IP address into pool of IPs
@@ -330,21 +340,23 @@ export class Rest {
                 body: { address }
             }
         };
+
         await this.fetch(options);
-    }
+    };
 
     /**
      * Get Lavalink info
      */
-    public getLavalinkInfo(): Promise<NodeInfo|undefined> {
+    public getLavalinkInfo(): Promise<NodeInfo | undefined> {
         const options = {
             endpoint: '/info',
             options: {
                 headers: { 'Content-Type': 'application/json' }
             }
         };
+
         return this.fetch(options);
-    }
+    };
 
     /**
      * Make a request to Lavalink
@@ -376,7 +388,7 @@ export class Rest {
             signal: abortController.signal
         };
 
-        if (![ 'GET', 'HEAD' ].includes(method) && options.body)
+        if (!['GET', 'HEAD'].includes(method) && options.body)
             finalFetchOptions.body = JSON.stringify(options.body);
 
         const request = await fetch(url.toString(), finalFetchOptions)
@@ -390,11 +402,10 @@ export class Rest {
                 throw new Error(`Rest request failed with response code: ${request.status}`);
             else
                 throw new Error(`Rest request failed with response code: ${request.status} | message: ${response.message}`);
-        }
+        };
+
         try {
             return await request.json() as T;
-        } catch {
-            return;
-        }
-    }
-}
+        } catch { };
+    };
+};

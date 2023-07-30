@@ -8,31 +8,30 @@ export enum State {
     RECONNECTING,
     DISCONNECTING,
     DISCONNECTED
-}
+};
 
 export enum VoiceState {
     SESSION_READY,
     SESSION_ID_MISSING,
     SESSION_ENDPOINT_MISSING,
     SESSION_FAILED_UPDATE
-}
+};
 
 export enum OpCodes {
     PLAYER_UPDATE = 'playerUpdate',
     STATS = 'stats',
     EVENT = 'event',
     READY = 'ready'
-}
+};
 
 export enum Versions {
     REST_VERSION = 4,
     WEBSOCKET_VERSION = 4
-}
+};
 
 export const ShoukakuDefaults: ShoukakuOptions = {
     resume: false,
     resumeTimeout: 30,
-    resumeByLibrary: false,
     reconnectTries: 3,
     reconnectInterval: 5,
     restTimeout: 60,
@@ -47,5 +46,6 @@ export const NodeDefaults: NodeOption = {
     url: '',
     auth: '',
     secure: false,
-    group: undefined
+    group: undefined,
+    sessionId: undefined
 };

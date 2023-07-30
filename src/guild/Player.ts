@@ -20,41 +20,41 @@ export interface PlayOptions {
         volume?: number;
     },
     info?: any;
-}
+};
 
 export interface ResumeOptions {
     noReplace?: boolean;
     pause?: boolean;
     startTime?: number;
     endTime?: number;
-}
+};
 
 export interface Band {
     band: number;
     gain: number;
-}
+};
 
 export interface KaraokeSettings {
     level?: number;
     monoLevel?: number;
     filterBand?: number;
     filterWidth?: number;
-}
+};
 
 export interface TimescaleSettings {
     speed?: number;
     pitch?: number;
     rate?: number;
-}
+};
 
 export interface FreqSettings {
     frequency?: number;
     depth?: number;
-}
+};
 
 export interface RotationSettings {
     rotationHz?: number;
-}
+};
 
 export interface DistortionSettings {
     sinOffset?: number;
@@ -65,58 +65,58 @@ export interface DistortionSettings {
     tanScale?: number;
     offset?: number;
     scale?: number;
-}
+};
 
 export interface ChannelMixSettings {
     leftToLeft?: number;
     leftToRight?: number;
     rightToLeft?: number;
     rightToRight?: number;
-}
+};
 
 export interface LowPassSettings {
     smoothing?: number
-}
+};
 
 export interface PlayerEvent {
     op: OpCodes.EVENT;
     type: PlayerEventType;
     guildId: string;
-}
+};
 
 export interface TrackStartEvent extends PlayerEvent {
     type: 'TrackStartEvent';
     track: Track;
-}
+};
 
 export interface TrackEndEvent extends PlayerEvent {
     type: 'TrackEndEvent';
     track: Track;
     reason: TrackEndReason;
-}
+};
 
 export interface TrackStuckEvent extends PlayerEvent {
     type: 'TrackStuckEvent';
     track: Track;
     thresholdMs: number;
-}
+};
 
 export interface TrackExceptionEvent extends PlayerEvent {
     type: 'TrackExceptionEvent';
     exception: Exception;
-}
+};
 
 export interface TrackStuckEvent extends PlayerEvent {
     type: 'TrackStuckEvent';
     thresholdMs: number;
-}
+};
 
 export interface WebSocketClosedEvent extends PlayerEvent {
     type: 'WebSocketClosedEvent';
     code: number;
     byRemote: boolean;
     reason: string;
-}
+};
 
 export interface PlayerUpdate {
     op: OpCodes.PLAYER_UPDATE;
@@ -126,7 +126,7 @@ export interface PlayerUpdate {
         time: number;
     };
     guildId: string;
-}
+};
 
 export interface FilterOptions {
     volume?: number;
@@ -139,7 +139,7 @@ export interface FilterOptions {
     distortion?: DistortionSettings | null;
     channelMix?: ChannelMixSettings | null;
     lowPass?: LowPassSettings | null;
-}
+};
 
 export declare interface Player {
     /**
@@ -191,7 +191,7 @@ export declare interface Player {
     off(event: 'exception', listener: (reason: TrackExceptionEvent) => void): this;
     off(event: 'resumed', listener: (player: Player) => void): this;
     off(event: 'update', listener: (data: PlayerUpdate) => void): this;
-}
+};
 
 /**
  * Wrapper object around Lavalink
@@ -253,7 +253,7 @@ export class Player extends EventEmitter {
         this.position = 0;
         this.ping = 0;
         this.filters = {};
-    }
+    };
 
     public get playerData(): UpdatePlayerInfo {
         return {
@@ -271,7 +271,7 @@ export class Player extends EventEmitter {
                 volume: this.volume
             }
         };
-    }
+    };
 
     /**
      * Move player to another node. Auto disconnects when the node specified is not found
@@ -280,31 +280,31 @@ export class Player extends EventEmitter {
     public async move(name?: string): Promise<void> {
         try {
             const node = this.node.manager.nodes.get(name!) || this.connection.getNode(this.connection.manager.nodes, this.connection);
-            if (!node)
-                throw new Error('No node available to move to');
-            if (node.state !== State.CONNECTED)
-                throw new Error('Tried to move to a node that is not connected');
-            if (node.name === this.node.name)
-                throw new Error('Tried to move to the same node where the current player is connected on');
+            if (!node) throw new Error('No node available to move to');
+            if (node.state !== State.CONNECTED) throw new Error('Tried to move to a node that is not connected');
+            if (node.name === this.node.name) throw new Error('Tried to move to the same node where the current player is connected on');
+
             await this.destroyPlayer();
             this.node = node;
             this.node.players.set(this.guildId, this);
+
             await this.resume();
         } catch (error) {
             this.connection.disconnect();
             await this.destroyPlayer(true);
             throw error;
-        }
-    }
+        };
+    };
 
     /**
      * Destroys the player in remote lavalink side
      */
     public async destroyPlayer(clean: boolean = false): Promise<void> {
         this.node.players.delete(this.guildId);
+
         if (clean) this.clean();
         await this.node.rest.destroyPlayer(this.guildId);
-    }
+    };
 
     /**
      * Play a new track
@@ -314,36 +314,40 @@ export class Player extends EventEmitter {
         const playerOptions: UpdatePlayerOptions = {
             encodedTrack: playable.track
         };
+
         if (playable.options) {
             const { pause, startTime, endTime, volume } = playable.options;
             if (pause) playerOptions.paused = pause;
             if (startTime) playerOptions.position = startTime;
             if (endTime) playerOptions.endTime = endTime;
             if (volume) playerOptions.volume = volume;
-        }
+        };
+
         this.track = playable.track;
         this.info = playable.info;
+
         if (playerOptions.paused) this.paused = playerOptions.paused;
         if (playerOptions.position) this.position = playerOptions.position;
         if (playerOptions.volume) this.volume = playerOptions.volume;
+
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
             noReplace: playable.options?.noReplace ?? false,
             playerOptions
         });
-    }
+    };
 
     /**
      * Stop the currently playing track
      */
     public async stopTrack(): Promise<void> {
         this.position = 0;
+
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
             playerOptions: { encodedTrack: null }
         });
-
-    }
+    };
 
     /**
      * Pause or unpause the currently playing track
@@ -355,7 +359,7 @@ export class Player extends EventEmitter {
             guildId: this.guildId,
             playerOptions: { paused }
         });
-    }
+    };
 
     /**
      * Seek to a specific time in the currently playing track
@@ -367,7 +371,7 @@ export class Player extends EventEmitter {
             guildId: this.guildId,
             playerOptions: { position }
         });
-    }
+    };
 
     /**
      * Sets the global volume of the player
@@ -379,7 +383,7 @@ export class Player extends EventEmitter {
             guildId: this.guildId,
             playerOptions: { volume: this.volume }
         });
-    }
+    };
 
     /**
      * Sets the filter volume of the player
@@ -388,7 +392,7 @@ export class Player extends EventEmitter {
     public async setFilterVolume(volume: number): Promise<void> {
         this.filters.volume = volume;
         await this.setFilters(this.filters);
-    }
+    };
     /**
      * Change the equalizer settings applied to the currently playing track
      * @param equalizer An array of objects that conforms to the Bands type that define volumes at different frequencies
@@ -396,8 +400,7 @@ export class Player extends EventEmitter {
     public async setEqualizer(equalizer: Band[]): Promise<void> {
         this.filters.equalizer = equalizer;
         await this.setFilters(this.filters);
-
-    }
+    };
 
     /**
      * Change the karaoke settings applied to the currently playing track
@@ -406,7 +409,7 @@ export class Player extends EventEmitter {
     public async setKaraoke(karaoke?: KaraokeSettings): Promise<void> {
         this.filters.karaoke = karaoke || null;
         await this.setFilters(this.filters);
-    }
+    };
 
     /**
      * Change the timescale settings applied to the currently playing track
@@ -415,7 +418,7 @@ export class Player extends EventEmitter {
     public async setTimescale(timescale?: TimescaleSettings): Promise<void> {
         this.filters.timescale = timescale || null;
         await this.setFilters(this.filters);
-    }
+    };
 
     /**
      * Change the tremolo settings applied to the currently playing track
@@ -424,7 +427,7 @@ export class Player extends EventEmitter {
     public async setTremolo(tremolo?: FreqSettings): Promise<void> {
         this.filters.tremolo = tremolo || null;
         await this.setFilters(this.filters);
-    }
+    };
 
     /**
      * Change the vibrato settings applied to the currently playing track
@@ -433,7 +436,7 @@ export class Player extends EventEmitter {
     public async setVibrato(vibrato?: FreqSettings): Promise<void> {
         this.filters.vibrato = vibrato || null;
         await this.setFilters(this.filters);
-    }
+    };
 
     /**
      * Change the rotation settings applied to the currently playing track
@@ -442,7 +445,7 @@ export class Player extends EventEmitter {
     public async setRotation(rotation?: RotationSettings): Promise<void> {
         this.filters.rotation = rotation || null;
         await this.setFilters(this.filters);
-    }
+    };
 
     /**
      * Change the distortion settings applied to the currently playing track
@@ -452,7 +455,7 @@ export class Player extends EventEmitter {
     public async setDistortion(distortion: DistortionSettings): Promise<void> {
         this.filters.distortion = distortion || null;
         await this.setFilters(this.filters);
-    }
+    };
 
     /**
      * Change the channel mix settings applied to the currently playing track
@@ -461,7 +464,7 @@ export class Player extends EventEmitter {
     public async setChannelMix(channelMix: ChannelMixSettings): Promise<void> {
         this.filters.channelMix = channelMix || null;
         await this.setFilters(this.filters);
-    }
+    };
 
     /**
      * Change the low pass settings applied to the currently playing track
@@ -470,7 +473,7 @@ export class Player extends EventEmitter {
     public async setLowPass(lowPass: LowPassSettings): Promise<void> {
         this.filters.lowPass = lowPass || null;
         await this.setFilters(this.filters);
-    }
+    };
 
     /**
      * Change the all filter settings applied to the currently playing track
@@ -482,7 +485,7 @@ export class Player extends EventEmitter {
             guildId: this.guildId,
             playerOptions: { filters }
         });
-    }
+    };
 
     /**
      * Clear all filters applied to the currently playing track
@@ -500,7 +503,7 @@ export class Player extends EventEmitter {
             channelMix: null,
             lowPass: null,
         });
-    }
+    };
 
     /**
      * Resumes the current track
@@ -508,13 +511,15 @@ export class Player extends EventEmitter {
      */
     public async resume(options: ResumeOptions = {}): Promise<void> {
         const data = this.playerData;
+
         if (options.noReplace) data.noReplace = options.noReplace;
         if (options.startTime) data.playerOptions.position = options.startTime;
         if (options.endTime) data.playerOptions.position;
         if (options.pause) data.playerOptions.paused = options.pause;
+
         await this.update(data);
         this.emit('resumed', this);
-    }
+    };
 
     /**
      * If you want to update the whole player yourself, sends raw update player info to lavalink
@@ -522,6 +527,7 @@ export class Player extends EventEmitter {
     public async update(updatePlayer: UpdatePlayerInfo): Promise<void> {
         const data = { ...updatePlayer, ...{ guildId: this.guildId, sessionId: this.node.sessionId! } };
         await this.node.rest.updatePlayer(data);
+
         if (updatePlayer.playerOptions) {
             const options = updatePlayer.playerOptions;
             if (options.encodedTrack) this.track = options.encodedTrack;
@@ -529,8 +535,8 @@ export class Player extends EventEmitter {
             if (options.paused) this.paused = options.paused;
             if (options.filters) this.filters = options.filters;
             if (options.volume) this.volume = options.volume;
-        }
-    }
+        };
+    };
 
     /**
      * Remove all event listeners on this instance
@@ -539,7 +545,7 @@ export class Player extends EventEmitter {
     public clean(): void {
         this.removeAllListeners();
         this.reset();
-    }
+    };
 
     /**
      * Reset the track, position and filters on this instance to defaults
@@ -550,7 +556,7 @@ export class Player extends EventEmitter {
         this.volume = 100;
         this.position = 0;
         this.filters = {};
-    }
+    };
 
     /**
      * Sends server update to lavalink
@@ -568,13 +574,15 @@ export class Player extends EventEmitter {
                     }
                 }
             };
+
             await this.node.rest.updatePlayer(playerUpdate);
         } catch (error) {
             if (!this.connection.established) throw error;
             this.connection.disconnect();
-            await Promise.allSettled([ this.destroyPlayer(true) ]);
-        }
-    }
+
+            await Promise.allSettled([this.destroyPlayer(true)]);
+        };
+    };
 
     /**
      * Handle player update data
@@ -584,7 +592,7 @@ export class Player extends EventEmitter {
         this.position = position;
         this.ping = ping;
         this.emit('update', json);
-    }
+    };
 
     /**
      * Handle player events received from Lavalink
@@ -612,14 +620,11 @@ export class Player extends EventEmitter {
                         this.emit('closed', json);
                     else
                         this.connection.moved = false;
-                }
+                };
+
                 break;
             default:
-                this.node.emit(
-                    'debug',
-                    this.node.name,
-                    `[Player] -> [Node] : Unknown Player Event Type ${json.type} | Guild: ${this.guildId}`
-                );
-        }
-    }
-}
+                this.node.emit('debug', this.node.name, `[Player] -> [Node] : Unknown Player Event Type ${json.type} | Guild: ${this.guildId}`);
+        };
+    };
+};
