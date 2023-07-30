@@ -46,6 +46,5 @@ export const NodeDefaults: NodeOption = {
     url: '',
     auth: '',
     secure: false,
-    group: undefined,
-    sessionId: undefined
+    group: undefined
 };

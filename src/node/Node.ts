@@ -4,7 +4,7 @@ import { wait } from '../Utils';
 import { EventEmitter } from 'events';
 import { IncomingMessage } from 'http';
 import { Player } from '../guild/Player';
-import { NodeOption, Shoukaku } from '../Shoukaku';
+import { NodeOption, PlayerDump, Shoukaku } from '../Shoukaku';
 import { OpCodes, State, Versions } from '../Constants';
 
 export interface NodeStats {
@@ -147,7 +147,6 @@ export class Node extends EventEmitter {
      * @param options.auth Credentials to access Lavalnk
      * @param options.secure Whether to use secure protocols or not
      * @param options.group Group of this node
-     * @param options.sessionId SessionId to reconnect
      */
     constructor(manager: Shoukaku, options: NodeOption) {
         super();
@@ -159,7 +158,6 @@ export class Node extends EventEmitter {
         this.version = `/v${Versions.WEBSOCKET_VERSION}`;
         this.url = `${options.secure ? 'wss' : 'ws'}://${options.url}`;
         this.auth = options.auth;
-        this.sessionId = options.sessionId;
         this.reconnects = 0;
         this.state = State.DISCONNECTED;
         this.stats = null;
@@ -211,8 +209,10 @@ export class Node extends EventEmitter {
             'User-Id': this.manager.id
         };
 
-        if (this.sessionId) headers['Session-Id'] = this.sessionId;
-        this.emit('debug', `[Socket] -> [${this.name}] : Connecting ${this.url}, Version: ${this.version}, Trying to resume? ${!!this.sessionId}`);
+        const sessionId = [...this.manager.reconnectingPlayers!.values()]?.find((player: PlayerDump) => player.node.name === this.name)?.node.sessionId;
+
+        if (sessionId) headers['Session-Id'] = sessionId;
+        this.emit('debug', `[Socket] -> [${this.name}] : Connecting ${this.url}, Version: ${this.version}, Trying to resume? ${!!sessionId}`);
         if (!this.initialized) this.initialized = true;
 
         const url = new URL(`${this.url}${this.version}/websocket`);
@@ -277,8 +277,14 @@ export class Node extends EventEmitter {
                 if (this.manager.options.resume) {
                     await this.rest.updateSession(this.manager.options.resume, this.manager.options.resumeTimeout);
                     this.emit('debug', `[Socket] -> [${this.name}] : Resuming configured!`);
+
+                    if (this.manager.reconnectingPlayers && this.manager.reconnectingPlayers?.size > 0) {
+                        this.emit('debug', `[${this.name}] -> [Player] : Trying to re-create players from the last session`);
+                        await this.manager.restorePlayers(this, this.manager.reconnectingPlayers);
+                        this.emit('debug', `[${this.name}] <-> [Player]: Session restore completed`);
+                    };
                 };
-                
+
                 break;
             case OpCodes.EVENT:
             case OpCodes.PLAYER_UPDATE:
@@ -325,7 +331,6 @@ export class Node extends EventEmitter {
         this.ws?.removeAllListeners();
         this.ws?.close();
         this.ws = null;
-        this.sessionId = undefined;
         this.state = State.DISCONNECTED;
         if (!this.shouldClean) return;
         this.destroyed = true;
@@ -340,7 +345,7 @@ export class Node extends EventEmitter {
         let move = this.manager.options.moveOnDisconnect;
         if (!move) return this.destroy(false);
         let count;
-        
+
         try {
             count = await this.movePlayers();
             move = count > 0;

@@ -1,11 +1,11 @@
 import { Node } from './node/Node';
-import { Rest } from './node/Rest';
 import { EventEmitter } from 'events';
 import { Player } from './guild/Player';
 import { Connection } from './guild/Connection';
 import { Connector } from './connectors/Connector';
 import { Constructor, mergeDefault } from './Utils';
 import { State, ShoukakuDefaults } from './Constants';
+import { Rest, UpdatePlayerOptions } from './node/Rest';
 
 export interface Structures {
     /**
@@ -39,10 +39,6 @@ export interface NodeOption {
      * Group of this node
      */
     group?: string;
-    /**
-     * SessionId to reconnect
-     */
-    sessionId?: string;
 };
 
 export interface ShoukakuOptions {
@@ -103,6 +99,22 @@ export interface MergedShoukakuOptions {
     userAgent: string;
     structures: Structures;
     voiceConnectionTimeout: number;
+};
+
+export interface PlayerDump {
+    node: {
+        name: string,
+        group?: string,
+        sessionId: string
+    },
+    options: {
+        guildId: string,
+        shardId: number,
+        channelId: string,
+        deaf?: boolean,
+        mute?: boolean
+    },
+    player: UpdatePlayerOptions;
 };
 
 export declare interface Shoukaku {
@@ -178,6 +190,10 @@ export class Shoukaku extends EventEmitter {
      */
     public readonly connections: Map<string, Connection>;
     /**
+     * Player dumps from previous session, waiting for reconnect
+     */
+    public reconnectingPlayers?: Map<String, PlayerDump>;
+    /**
      * Shoukaku instance identifier
      */
     public id: string | null;
@@ -194,7 +210,7 @@ export class Shoukaku extends EventEmitter {
      * @param options.userAgent User Agent to use when making requests to Lavalink
      * @param options.structures Custom structures for shoukaku to use
      */
-    constructor(connector: Connector, nodes: NodeOption[], options: ShoukakuOptions = {}) {
+    constructor(connector: Connector, nodes: NodeOption[], options: ShoukakuOptions = {}, dumps?: [String, PlayerDump][]) {
         super();
         this.connector = connector.set(this);
         this.options = mergeDefault(ShoukakuDefaults, options);
@@ -202,6 +218,7 @@ export class Shoukaku extends EventEmitter {
         this.connections = new Map();
         this.id = null;
         this.connector.listen(nodes);
+        this.reconnectingPlayers = new Map<String, PlayerDump>(dumps);
     };
 
     /**
@@ -219,13 +236,93 @@ export class Shoukaku extends EventEmitter {
     };
 
     /**
+     * Get dumped players data that you will need in case of a restart
+     * @returns A map of guild IDs and PlayerDump
+     * @readonly
+     */
+    get playersDump(): Map<string, PlayerDump> {
+        try {
+            const players = new Map() as Map<string, PlayerDump>;
+
+            for (const node of this.nodes.values()) {
+                for (const [id, player] of node.players) {
+                    if (!player.connection.serverUpdate?.token || !player.connection.serverUpdate?.endpoint) continue;
+
+                    players.set(id, {
+                        node: {
+                            name: player.node.name,
+                            group: player.node.group,
+                            sessionId: player.node.sessionId!
+                        },
+                        options: {
+                            guildId: player.connection.guildId,
+                            shardId: player.connection.shardId,
+                            channelId: player.connection.channelId!,
+                            deaf: player.connection.deafened,
+                            mute: player.connection.muted
+                        },
+                        player: player.playerData.playerOptions
+                    });
+                };
+            };
+
+            return players;
+        } catch (error) { throw error };
+    };
+
+    /**
+     * Restore players from previous session
+     * @param players playersDump from saved session
+     * @throws {Error} Will throw catched error if something went wrong
+     */
+    async restorePlayers(node: Node, players: Map<String, PlayerDump>): Promise<void> {
+        try {
+            const playerDumps = [...players.values()].filter((player: PlayerDump) => player.node.sessionId === node.sessionId && (player.node.name === node.name || player.node.group === node.group));
+            if (playerDumps.length === 0) {
+                this.reconnectingPlayers!.clear()
+                node.emit('debug', `[${node.name}] <- [Player] : Can't restore session due to outdated id`)
+            };
+
+            for (const dump of playerDumps) {
+                this.reconnectingPlayers!.delete(dump.options.guildId);
+
+                const player = await this.joinVoiceChannel({
+                    guildId: dump.options.guildId,
+                    shardId: dump.options.shardId,
+                    channelId: dump.options.channelId,
+                    deaf: dump.options.deaf ?? false,
+                    mute: dump.options.mute ?? false,
+                    getNode: () => { return node }
+                });
+
+                dump.player.voice = { token: player.connection.serverUpdate!.token, endpoint: player.connection.serverUpdate!.endpoint, sessionId: player.connection.sessionId as string };
+
+                player.connection.setStateUpdate({
+                    channel_id: dump.options.channelId,
+                    session_id: dump.player.voice?.sessionId,
+                    self_deaf: dump.options.deaf ?? false,
+                    self_mute: dump.options.mute ?? false
+                });
+
+                player.connection.setServerUpdate({
+                    token: dump.player.voice!.token,
+                    endpoint: dump.player.voice!.endpoint,
+                    guild_id: dump.options.guildId
+                });
+
+                await player.update({ guildId: dump.options.guildId, playerOptions: dump.player });
+                node.emit('debug', `[${node.name}] <- [Player] : Restored session "${dump.options.guildId}"`);
+            };
+        } catch (error) { throw new Error("Can't restore previous player:\n" + error) };
+    };
+
+    /**
      * Add a Lavalink node to the pool of available nodes
      * @param options.name Name of this node
      * @param options.url URL of Lavalink
      * @param options.auth Credentials to access Lavalnk
      * @param options.secure Whether to use secure protocols or not
      * @param options.group Group of this node
-     * @param options.sessionId SessionId to reconnect
      */
     public addNode(options: NodeOption): void {
         const node = new Node(this, options);

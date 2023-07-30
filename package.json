@@ -1,6 +1,6 @@
 {
   "name": "@moscowcity/shoukaku",
-  "version": "4.1.10",
+  "version": "4.1.12",
   "description": "A forked module of shoukaku with player.info option",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

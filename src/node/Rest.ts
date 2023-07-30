@@ -183,7 +183,6 @@ export class Rest {
      * @param options.auth Credentials to access Lavalnk
      * @param options.secure Weather to use secure protocols or not
      * @param options.group Group of this node
-     * @param options.sessionId SessionId to reconnect
      */
     constructor(node: Node, options: NodeOption) {
         this.node = node;
