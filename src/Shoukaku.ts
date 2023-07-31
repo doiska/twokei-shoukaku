@@ -5,7 +5,7 @@ import { Connection } from './guild/Connection';
 import { Connector } from './connectors/Connector';
 import { Constructor, mergeDefault } from './Utils';
 import { State, ShoukakuDefaults } from './Constants';
-import { Rest, UpdatePlayerOptions } from './node/Rest';
+import { Rest, UpdatePlayerOptions, Track } from './node/Rest';
 
 export interface Structures {
     /**
@@ -313,7 +313,7 @@ export class Shoukaku extends EventEmitter {
                 await player.update({ guildId: dump.options.guildId, playerOptions: dump.player });
                 node.emit('debug', `[${node.name}] <- [Player] : Restored session "${dump.options.guildId}"`);
             };
-        } catch (error) { throw new Error("Can't restore previous player:\n" + error) };
+        } catch (error) { throw error };
     };
 
     /**

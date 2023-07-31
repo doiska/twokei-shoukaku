@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { Node } from '../node/Node';
 import { Connection } from './Connection';
 import { OpCodes, State } from '../Constants';
-import { Exception, Track, UpdatePlayerInfo, UpdatePlayerOptions } from '../node/Rest';
+import { Exception, Track, TrackInfo, UpdatePlayerInfo, UpdatePlayerOptions } from '../node/Rest';
 
 export type TrackEndReason = 'finished' | 'loadFailed' | 'stopped' | 'replaced' | 'cleanup';
 export type PlayerEventType = 'TrackStartEvent' | 'TrackEndEvent' | 'TrackExceptionEvent' | 'TrackStuckEvent' | 'WebSocketClosedEvent';
@@ -19,7 +19,7 @@ export interface PlayOptions {
         endTime?: number;
         volume?: number;
     },
-    info?: any;
+    info: TrackInfo;
 };
 
 export interface ResumeOptions {
@@ -263,6 +263,7 @@ export class Player extends EventEmitter {
                 position: this.position,
                 paused: this.paused,
                 filters: this.filters,
+                info: this.info,
                 voice: {
                     token: this.connection.serverUpdate!.token,
                     endpoint: this.connection.serverUpdate!.endpoint,
@@ -312,7 +313,8 @@ export class Player extends EventEmitter {
      */
     public async playTrack(playable: PlayOptions): Promise<void> {
         const playerOptions: UpdatePlayerOptions = {
-            encodedTrack: playable.track
+            encodedTrack: playable.track,
+            info: playable.info
         };
 
         if (playable.options) {
@@ -345,7 +347,7 @@ export class Player extends EventEmitter {
 
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { encodedTrack: null }
+            playerOptions: { encodedTrack: null, info: null }
         });
     };
 
@@ -357,7 +359,7 @@ export class Player extends EventEmitter {
         this.paused = paused;
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { paused }
+            playerOptions: { paused: true, info: this.info }
         });
     };
 
@@ -369,7 +371,7 @@ export class Player extends EventEmitter {
         this.position = position;
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { position }
+            playerOptions: { position: position, info: this.info }
         });
     };
 
@@ -381,7 +383,7 @@ export class Player extends EventEmitter {
         this.volume = volume;
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { volume: this.volume }
+            playerOptions: { volume: this.volume, info: this.info }
         });
     };
 
@@ -483,7 +485,7 @@ export class Player extends EventEmitter {
         this.filters = filters;
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { filters }
+            playerOptions: { filters: filters, info: this.info }
         });
     };
 
@@ -535,6 +537,7 @@ export class Player extends EventEmitter {
             if (options.paused) this.paused = options.paused;
             if (options.filters) this.filters = options.filters;
             if (options.volume) this.volume = options.volume;
+            if (options.info) this.info = options.info;
         };
     };
 
@@ -567,6 +570,7 @@ export class Player extends EventEmitter {
             const playerUpdate = {
                 guildId: this.guildId,
                 playerOptions: {
+                    info: this.info,
                     voice: {
                         token: this.connection.serverUpdate!.token,
                         endpoint: this.connection.serverUpdate!.endpoint,

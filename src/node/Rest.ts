@@ -15,20 +15,23 @@ export enum LoadType {
 
 export interface Track {
     encoded: string;
-    info: {
-        identifier: string;
-        isSeekable: boolean;
-        author: string;
-        duration: number;
-        isStream: boolean;
-        position: number;
-        title: string;
-        uri?: string;
-        artworkUrl?: string;
-        isrc?: string;
-        sourceName: string;
-    };
+    info: TrackInfo;
     pluginInfo: unknown;
+};
+
+export interface TrackInfo {
+    identifier: string;
+    isSeekable: boolean;
+    author: string;
+    duration: number;
+    isStream: boolean;
+    position: number;
+    title: string;
+    uri?: string;
+    sourceName?: string;
+    artworkUrl?: string;
+    isTrackUnavailable?: string;
+    isrc?: string;
 };
 
 export interface Playlist {
@@ -121,6 +124,7 @@ export interface UpdatePlayerOptions {
     position?: number;
     endTime?: number;
     volume?: number;
+    info?: TrackInfo | null;
     paused?: boolean;
     filters?: FilterOptions;
     voice?: LavalinkPlayerVoiceOptions;
