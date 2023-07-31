@@ -1,6 +1,6 @@
 {
   "name": "@moscowcity/shoukaku",
-  "version": "4.1.12",
+  "version": "4.1.13",
   "description": "Forked Shoukaku module with player.info option and session dump & recovery",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
