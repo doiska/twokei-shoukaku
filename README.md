@@ -1,7 +1,7 @@
 # Shoukaku
 
 ## A stable and updated wrapper around Lavalink
-> Please note that this is a modified version used in our application infrastructure.<br/><br/>Shoukaku: https://github.com/Deivu/Shoukaku<br/>
+> This is a modified version used in our application infrastructure.<br/><br/>Shoukaku: https://github.com/Deivu/Shoukaku<br/>
 > Ducumentation: https://deivu.github.io/Shoukaku/
 
 <br/>
@@ -9,11 +9,10 @@
 ### What's the difference?
 > We added the "player.info" interface, which wasn't included in Shoukaku, and implemented session recovery from a dump stored in Redis or a Database.<br/>
 <hr/>
+
+Please, make sure that only the added changes and examples of their usage will be shown, so it's recommended to familiarize yourself with the [original repository](https://github.com/Deivu/Shoukaku) before starting to read.
+
 <br/>
-
-### Please, make sure that only the added changes and examples of their usage will be shown, so it's recommended to familiarize yourself with the [original repository](https://github.com/Deivu/Shoukaku) before starting to read.
-
-<br/><br/>
 
 ### Track Interface:
 ```TS
@@ -87,7 +86,7 @@ export class PlayerListeners {
     };
 };
 ```
-> Upon restart, we retrieve the data from the model and give it to Shoukaku
+> Upon restart, we retrieve the data from the model and give it to Shoukaku.
 
 ```TS
 // queue.session is a PlayerDump that we previously saved using this.shoukaku.playersDump.get(data.guildId).
