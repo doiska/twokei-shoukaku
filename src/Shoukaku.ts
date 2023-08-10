@@ -4,8 +4,8 @@ import { Player } from './guild/Player';
 import { Connection } from './guild/Connection';
 import { Connector } from './connectors/Connector';
 import { Constructor, mergeDefault } from './Utils';
-import { State, ShoukakuDefaults } from './Constants';
-import { Rest, UpdatePlayerOptions, Track } from './node/Rest';
+import { Rest, UpdatePlayerOptions } from './node/Rest';
+import { State, ShoukakuDefaults, OpCodes } from './Constants';
 
 export interface Structures {
     /**
@@ -103,18 +103,23 @@ export interface MergedShoukakuOptions {
 
 export interface PlayerDump {
     node: {
-        name: string,
-        group?: string,
-        sessionId: string
-    },
+        name: string;
+        group?: string;
+        sessionId: string;
+    };
     options: {
-        guildId: string,
-        shardId: number,
-        channelId: string,
-        deaf?: boolean,
-        mute?: boolean
-    },
+        guildId: string;
+        shardId: number;
+        channelId: string;
+        deaf?: boolean;
+        mute?: boolean;
+    };
     player: UpdatePlayerOptions;
+    state?: {
+        restored: boolean;
+        node: string;
+    };
+    timestamp: number;
 };
 
 export declare interface Shoukaku {
@@ -137,7 +142,7 @@ export declare interface Shoukaku {
      * Emitted when Shoukaku is ready to receive operations
      * @eventProperty
      */
-    on(event: 'ready', listener: (name: string, reconnected: boolean) => void): this;
+    on(event: 'ready', listener: (name: string, reconnected: number) => void): this;
     /**
      * Emitted when a websocket connection to Lavalink closes
      * @eventProperty
@@ -156,14 +161,14 @@ export declare interface Shoukaku {
     once(event: 'reconnecting', listener: (name: string, reconnectsLeft: number, reconnectInterval: number) => void): this;
     once(event: 'debug', listener: (name: string, info: string) => void): this;
     once(event: 'error', listener: (name: string, error: Error) => void): this;
-    once(event: 'ready', listener: (name: string, reconnected: boolean) => void): this;
+    once(event: 'ready', listener: (name: string, reconnected: number) => void): this;
     once(event: 'close', listener: (name: string, code: number, reason: string) => void): this;
     once(event: 'disconnect', listener: (name: string, moved: boolean, count: number) => void): this;
     once(event: 'raw', listener: (name: string, json: unknown) => void): this;
     off(event: 'reconnecting', listener: (name: string, reconnectsLeft: number, reconnectInterval: number) => void): this;
     off(event: 'debug', listener: (name: string, info: string) => void): this;
     off(event: 'error', listener: (name: string, error: Error) => void): this;
-    off(event: 'ready', listener: (name: string, reconnected: boolean) => void): this;
+    off(event: 'ready', listener: (name: string, reconnected: number) => void): this;
     off(event: 'close', listener: (name: string, code: number, reason: string) => void): this;
     off(event: 'disconnect', listener: (name: string, moved: boolean, count: number) => void): this;
     off(event: 'raw', listener: (name: string, json: unknown) => void): this;
@@ -261,7 +266,8 @@ export class Shoukaku extends EventEmitter {
                             deaf: player.connection.deafened,
                             mute: player.connection.muted
                         },
-                        player: player.playerData.playerOptions
+                        player: player.playerData.playerOptions,
+                        timestamp: Date.now()
                     });
                 };
             };
@@ -275,16 +281,23 @@ export class Shoukaku extends EventEmitter {
      * @param players playersDump from saved session
      * @throws {Error} Will throw catched error if something went wrong
      */
-    async restorePlayers(node: Node, players: Map<String, PlayerDump>): Promise<void> {
+    async restorePlayers(node: Node, players: PlayerDump[]): Promise<void> {
         try {
-            const playerDumps = [...players.values()].filter((player: PlayerDump) => player.node.sessionId === node.sessionId && (player.node.name === node.name || player.node.group === node.group));
+            const playerDumps = players.filter((player: PlayerDump) => player.node.sessionId === node.sessionId && (player.node.name === node.name || player.node.group === node.group));
+
             if (playerDumps.length === 0) {
                 this.reconnectingPlayers!.clear()
                 node.emit('debug', `[${node.name}] <- [Player] : Can't restore session due to outdated id`)
             };
 
             for (const dump of playerDumps) {
-                this.reconnectingPlayers!.delete(dump.options.guildId);
+                if (dump.timestamp + (this.options.reconnectInterval * 1000) < Date.now()) {
+                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Timestamp exceeds the reconnect limit, player cannot be restored `);
+
+                    node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
+                    node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
+                    continue;
+                };
 
                 const player = await this.joinVoiceChannel({
                     guildId: dump.options.guildId,
@@ -312,6 +325,10 @@ export class Shoukaku extends EventEmitter {
 
                 await player.update({ guildId: dump.options.guildId, playerOptions: dump.player });
                 node.emit('debug', `[${node.name}] <- [Player] : Restored session "${dump.options.guildId}"`);
+
+                dump.state = { restored: true, node: node.name };
+                node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: dump.state, guildId: dump.options.guildId });
+                node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: dump.state, guildId: dump.options.guildId });
             };
         } catch (error) { throw error };
     };

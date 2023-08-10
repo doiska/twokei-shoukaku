@@ -272,18 +272,20 @@ export class Node extends EventEmitter {
 
                 this.state = State.CONNECTED;
                 this.emit('debug', `[Socket] -> [${this.name}] : Lavalink is ready! | Lavalink resume: ${json.resumed}`);
-                this.emit('ready', json.resumed);
 
                 if (this.manager.options.resume) {
                     await this.rest.updateSession(this.manager.options.resume, this.manager.options.resumeTimeout);
                     this.emit('debug', `[Socket] -> [${this.name}] : Resuming configured!`);
 
-                    if (this.manager.reconnectingPlayers && this.manager.reconnectingPlayers?.size > 0) {
+                    if (this.manager.reconnectingPlayers && [...this.manager.reconnectingPlayers?.values()]?.filter(player => !player.state)?.length > 0) {
                         this.emit('debug', `[${this.name}] -> [Player] : Trying to re-create players from the last session`);
-                        await this.manager.restorePlayers(this, this.manager.reconnectingPlayers);
+                        await this.manager.restorePlayers(this, [...this.manager.reconnectingPlayers?.values()]?.filter(player => !player.state));
                         this.emit('debug', `[${this.name}] <-> [Player]: Session restore completed`);
-                    };
+                    } else this.emit('debug', ``);
                 };
+
+                this.emit('ready', [...this.manager.reconnectingPlayers!.values()]?.filter(player => player.state?.node === this.name && player.state.restored)?.length ?? 0);
+                this.manager.reconnectingPlayers?.clear();
 
                 break;
             case OpCodes.EVENT:

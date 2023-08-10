@@ -19,6 +19,7 @@ export enum VoiceState {
 
 export enum OpCodes {
     PLAYER_UPDATE = 'playerUpdate',
+    PLAYER_RESTORE = 'playerRestore',
     STATS = 'stats',
     EVENT = 'event',
     READY = 'ready'

@@ -128,6 +128,15 @@ export interface PlayerUpdate {
     guildId: string;
 };
 
+export interface PlayerRestore {
+    op: OpCodes.PLAYER_RESTORE;
+    state: {
+        restored: boolean;
+        node: string;
+    };
+    guildId: string;
+};
+
 export interface FilterOptions {
     volume?: number;
     equalizer?: Band[];
@@ -173,10 +182,15 @@ export declare interface Player {
      */
     on(event: 'resumed', listener: (player: Player) => void): this;
     /**
-     * Emitted when a playerUpdate even is received from Lavalink
+     * Emitted when a playerUpdate event is received from Lavalink
      * @eventProperty
      */
     on(event: 'update', listener: (data: PlayerUpdate) => void): this;
+    /**
+     * Emitted when a playerRestore event received from Shoukaku
+     * @eventProperty
+     */
+    on(event: 'restore', listener: (data: PlayerRestore) => void): this;
     once(event: 'end', listener: (reason: TrackEndEvent) => void): this;
     once(event: 'stuck', listener: (data: TrackStuckEvent) => void): this;
     once(event: 'closed', listener: (reason: WebSocketClosedEvent) => void): this;
@@ -184,6 +198,7 @@ export declare interface Player {
     once(event: 'exception', listener: (reason: TrackExceptionEvent) => void): this;
     once(event: 'resumed', listener: (player: Player) => void): this;
     once(event: 'update', listener: (data: PlayerUpdate) => void): this;
+    once(event: 'restore', listener: (data: PlayerRestore) => void): this;
     off(event: 'end', listener: (reason: TrackEndEvent) => void): this;
     off(event: 'stuck', listener: (data: TrackStuckEvent) => void): this;
     off(event: 'closed', listener: (reason: WebSocketClosedEvent) => void): this;
@@ -191,6 +206,7 @@ export declare interface Player {
     off(event: 'exception', listener: (reason: TrackExceptionEvent) => void): this;
     off(event: 'resumed', listener: (player: Player) => void): this;
     off(event: 'update', listener: (data: PlayerUpdate) => void): this;
+    off(event: 'restore', listener: (data: PlayerRestore) => void): this;
 };
 
 /**
