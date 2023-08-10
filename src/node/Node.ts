@@ -281,7 +281,7 @@ export class Node extends EventEmitter {
                         this.emit('debug', `[${this.name}] -> [Player] : Trying to re-create players from the last session`);
                         await this.manager.restorePlayers(this, [...this.manager.reconnectingPlayers?.values()]?.filter(player => !player.state));
                         this.emit('debug', `[${this.name}] <-> [Player]: Session restore completed`);
-                    } else this.emit('debug', ``);
+                    } else this.emit('debug', `[${this.name}] <-> [Player] : Restore canceled due to missing data`);
                 };
 
                 this.emit('ready', [...this.manager.reconnectingPlayers!.values()]?.filter(player => player.state?.node === this.name && player.state.restored)?.length ?? 0);

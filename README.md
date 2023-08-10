@@ -47,7 +47,7 @@ shoukaku.players.get("id").track.info
 
 <br/><br/>
 
-### Session Restore
+### Session Restore:
 > You should listen to the "raw" event from Shoukaku and redirect it to your functions, as regular "player.on" will stop working after a restart and will need to be reassigned manually.
 
 ```TS
