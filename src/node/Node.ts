@@ -285,7 +285,7 @@ export class Node extends EventEmitter {
                 };
 
                 this.emit('ready', [...this.manager.reconnectingPlayers!.values()]?.filter(player => player.state?.node === this.name && player.state.restored)?.length ?? 0);
-                this.manager.reconnectingPlayers?.clear();
+                [...this.manager.reconnectingPlayers!.values()]?.filter(player => player.state?.node === this.name).forEach(dump => this.manager.reconnectingPlayers?.delete(dump.options.guildId));
 
                 break;
             case OpCodes.EVENT:
