@@ -283,16 +283,11 @@ export class Shoukaku extends EventEmitter {
      */
     async restorePlayers(node: Node, players: PlayerDump[]): Promise<void> {
         try {
-            const playerDumps = players.filter((player: PlayerDump) => player.node.sessionId === node.sessionId && (player.node.name === node.name || player.node.group === node.group));
-
-            if (playerDumps.length === 0) {
-                this.reconnectingPlayers!.clear()
-                node.emit('debug', `[${node.name}] <- [Player] : Can't restore session due to outdated id`)
-            };
+            const playerDumps = players.filter((player: PlayerDump) => player.node.name === node.name || player.node.group === node.group);
 
             for (const dump of playerDumps) {
                 if (dump.timestamp + (this.options.reconnectInterval * 1000) < Date.now()) {
-                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Timestamp exceeds the reconnect limit, player cannot be restored `);
+                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Timestamp exceeds the reconnect limit, sessionId outdated`);
 
                     node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
                     node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
