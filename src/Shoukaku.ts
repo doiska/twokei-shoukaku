@@ -197,7 +197,7 @@ export class Shoukaku extends EventEmitter {
     /**
      * Player dumps from previous session, waiting for reconnect
      */
-    public reconnectingPlayers?: Map<String, PlayerDump>;
+    public reconnectingPlayers: Map<String, PlayerDump>;
     /**
      * Array of nodes waiting for connection
      */
@@ -288,7 +288,7 @@ export class Shoukaku extends EventEmitter {
      */
     async restorePlayers(node: Node): Promise<void> {
         try {
-            const playerDumps = [...this.reconnectingPlayers!.values()]?.filter((player: PlayerDump) => player.node.name === node.name || player.node.group === node.group);
+            const playerDumps = [...this.reconnectingPlayers.values()].filter((player: PlayerDump) => player.node.name === node.name || player.node.group === node.group);
 
             if (!playerDumps || playerDumps.length === 0) node.emit('debug', `[${node.name}] <- [Player] : Restore canceled due to missing data`);
 

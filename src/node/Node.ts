@@ -209,7 +209,7 @@ export class Node extends EventEmitter {
             'User-Id': this.manager.id
         };
 
-        const sessionId = [...this.manager.reconnectingPlayers!.values()]?.find((player: PlayerDump) => player.node.name === this.name)?.node.sessionId;
+        const sessionId = [...this.manager.reconnectingPlayers.values()].find((player: PlayerDump) => player.node.name === this.name)?.node.sessionId;
 
         if (sessionId) headers['Session-Id'] = sessionId;
         this.emit('debug', `[Socket] -> [${this.name}] : Connecting ${this.url}, Version: ${this.version}, Trying to resume? ${!!sessionId}`);
@@ -286,8 +286,8 @@ export class Node extends EventEmitter {
 
                 this.manager.connectingNodes.splice(this.manager.connectingNodes.indexOf(this.manager.connectingNodes.find(e => e.name === this.name)!), 1);
 
-                this.emit('ready', [...this.manager.reconnectingPlayers!.values()]?.filter(player => player.state?.node === this.name && player.state.restored)?.length ?? 0);
-                [...this.manager.reconnectingPlayers!.values()]?.filter(player => player.state?.node === this.name).forEach(dump => this.manager.reconnectingPlayers?.delete(dump.options.guildId));
+                this.emit('ready', [...this.manager.reconnectingPlayers.values()].filter(player => player.state?.node === this.name && player.state.restored)?.length ?? 0);
+                [...this.manager.reconnectingPlayers.values()]?.filter(player => player.state?.node === this.name).forEach(dump => this.manager.reconnectingPlayers.delete(dump.options.guildId));
 
                 break;
             case OpCodes.EVENT:
