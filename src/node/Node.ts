@@ -191,7 +191,7 @@ export class Node extends EventEmitter {
      * If we should clean this node
      * @internal @readonly
      */
-    private get shouldClean(): boolean { return this.destroyed || this.reconnects >= this.manager.options.reconnectTries };
+    private get shouldClean(): boolean { return this.destroyed || this.reconnects + 1 >= this.manager.options.reconnectTries };
 
     /**
      * Connect to Lavalink
@@ -277,12 +277,14 @@ export class Node extends EventEmitter {
                     await this.rest.updateSession(this.manager.options.resume, this.manager.options.resumeTimeout);
                     this.emit('debug', `[Socket] -> [${this.name}] : Resuming configured!`);
 
-                    if (this.manager.reconnectingPlayers && [...this.manager.reconnectingPlayers?.values()]?.filter(player => !player.state)?.length > 0) {
+                    if (this.manager.reconnectingPlayers) {
                         this.emit('debug', `[${this.name}] -> [Player] : Trying to re-create players from the last session`);
-                        await this.manager.restorePlayers(this, [...this.manager.reconnectingPlayers?.values()]?.filter(player => !player.state));
+                        await this.manager.restorePlayers(this);
                         this.emit('debug', `[${this.name}] <-> [Player]: Session restore completed`);
-                    } else this.emit('debug', `[${this.name}] <-> [Player] : Restore canceled due to missing data`);
+                    };
                 };
+
+                this.manager.connectingNodes.splice(this.manager.connectingNodes.indexOf(this.manager.connectingNodes.find(e => e.name === this.name)!), 1);
 
                 this.emit('ready', [...this.manager.reconnectingPlayers!.values()]?.filter(player => player.state?.node === this.name && player.state.restored)?.length ?? 0);
                 [...this.manager.reconnectingPlayers!.values()]?.filter(player => player.state?.node === this.name).forEach(dump => this.manager.reconnectingPlayers?.delete(dump.options.guildId));
@@ -311,10 +313,10 @@ export class Node extends EventEmitter {
         this.emit('debug', `[Socket] <-/-> [${this.name}] : Connection Closed, Code: ${code || 'Unknown Code'}`);
         this.emit('close', code, reason);
 
-        if (this.shouldClean)
+        if (this.shouldClean) {
+            this.manager.restorePlayers(this);
             this.clean();
-        else
-            this.reconnect();
+        } else this.reconnect();
     };
 
     /**
@@ -344,6 +346,8 @@ export class Node extends EventEmitter {
      * @internal
      */
     private async clean(): Promise<void> {
+        this.manager.connectingNodes.splice(this.manager.connectingNodes.indexOf(this.manager.connectingNodes.find(e => e.name === this.name)!), 1);
+
         let move = this.manager.options.moveOnDisconnect;
         if (!move) return this.destroy(false);
         let count;

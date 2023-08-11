@@ -199,6 +199,10 @@ export class Shoukaku extends EventEmitter {
      */
     public reconnectingPlayers?: Map<String, PlayerDump>;
     /**
+     * Array of nodes waiting for connection
+     */
+    public connectingNodes: NodeOption[];
+    /**
      * Shoukaku instance identifier
      */
     public id: string | null;
@@ -224,6 +228,7 @@ export class Shoukaku extends EventEmitter {
         this.id = null;
         this.connector.listen(nodes);
         this.reconnectingPlayers = new Map<String, PlayerDump>(dumps);
+        this.connectingNodes = [];
     };
 
     /**
@@ -281,13 +286,15 @@ export class Shoukaku extends EventEmitter {
      * @param players playersDump from saved session
      * @throws {Error} Will throw catched error if something went wrong
      */
-    async restorePlayers(node: Node, players: PlayerDump[]): Promise<void> {
+    async restorePlayers(node: Node): Promise<void> {
         try {
-            const playerDumps = players.filter((player: PlayerDump) => player.node.name === node.name || player.node.group === node.group);
+            const playerDumps = [...this.reconnectingPlayers!.values()]?.filter((player: PlayerDump) => player.node.name === node.name || player.node.group === node.group);
+
+            if (!playerDumps || playerDumps.length === 0) node.emit('debug', `[${node.name}] <- [Player] : Restore canceled due to missing data`);
 
             for (const dump of playerDumps) {
-                if (dump.timestamp + (this.options.reconnectInterval * 1000) < Date.now()) {
-                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Timestamp exceeds the reconnect limit, sessionId outdated`);
+                if (dump.timestamp + (this.options.reconnectInterval * 1000) < Date.now() || this.connectingNodes.filter(n => n?.group === node?.group).length === 0 || node.state !== State.CONNECTED) {
+                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because session is expired or there are no suitable nodes available`);
 
                     node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
                     node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
@@ -347,6 +354,7 @@ export class Shoukaku extends EventEmitter {
         node.once('disconnect', (...args) => this.clean(node, ...args));
         node.connect();
         this.nodes.set(node.name, node);
+        this.connectingNodes.push(options);
     };
 
     /**

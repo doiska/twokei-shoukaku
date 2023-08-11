@@ -92,7 +92,7 @@ export class PlayerListeners {
 // queue.session is a PlayerDump that we previously saved using this.shoukaku.playersDump.get(data.guildId).
 const QueueData = (await Database.getAllData("queue")).filter((queue: any) => queue.session);
 
-// It doesn't matter how you store the session, but you need to convert them to Map<string, PlayerDump>, where string = guildId
+// It doesn't matter how you store the session, but you need to convert them to [String, PlayerDump], where String = guildId
 const PreviousSessions = QueueData.map((queue: QueueModel) => [queue.guild, queue.session]);
 
 this.shoukaku = new Shoukaku(new Connectors.Eris(this.app.client), 
