@@ -1,5 +1,5 @@
 {
-  "name": "@moscowcity/shoukaku",
+  "name": "@twokei/shoukaku",
   "version": "4.1.4",
   "description": "Forked Shoukaku module with player.info option and session dump & recovery",
   "main": "dist/index.js",
@@ -37,6 +37,10 @@
   "author": "Saya",
   "contributors": [
     {
+      "name": "doiska",
+      "email": "me@doiska.dev"
+    },
+    {
       "email": "blagochevk@mail.ru",
       "name": "Kirill Blagochev"
     }
@@ -44,7 +48,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MoscowMusic/shoukaku"
+    "url": "https://github.com/doiska/twokei-shoukaku"
   },
   "dependencies": {
     "ws": "^8.13.0"

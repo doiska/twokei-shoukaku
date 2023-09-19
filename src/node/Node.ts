@@ -27,7 +27,7 @@ export interface NodeStats {
         lavalinkLoad: number;
     };
     uptime: number;
-};
+}
 
 type NodeInfoVersion = {
     semver: string;
@@ -67,9 +67,9 @@ export interface ResumableHeaders {
     'Authorization': string;
     'User-Id': string;
     'Session-Id': string;
-};
+}
 
-export interface NonResumableHeaders extends Omit<ResumableHeaders, 'Session-Id'> { };
+export interface NonResumableHeaders extends Omit<ResumableHeaders, 'Session-Id'> { }
 
 /**
  * Represents a Lavalink node
@@ -165,7 +165,7 @@ export class Node extends EventEmitter {
         this.ws = null;
         this.initialized = false;
         this.destroyed = false;
-    };
+    }
 
     /**
      * Penalties for load balancing
@@ -182,16 +182,18 @@ export class Node extends EventEmitter {
         if (this.stats.frameStats) {
             penalties += this.stats.frameStats.deficit;
             penalties += this.stats.frameStats.nulled * 2;
-        };
+        }
 
         return penalties;
-    };
+    }
 
     /**
      * If we should clean this node
      * @internal @readonly
      */
-    private get shouldClean(): boolean { return this.destroyed || this.reconnects + 1 >= this.manager.options.reconnectTries };
+    private get shouldClean(): boolean {
+        return this.destroyed || this.reconnects + 1 >= this.manager.options.reconnectTries;
+    }
 
     /**
      * Connect to Lavalink
@@ -209,7 +211,7 @@ export class Node extends EventEmitter {
             'User-Id': this.manager.id
         };
 
-        const sessionId = [...this.manager.reconnectingPlayers.values()].find((player: PlayerDump) => player.node.name === this.name)?.node.sessionId;
+        const sessionId = [ ...this.manager.reconnectingPlayers.values() ].find((player: PlayerDump) => player.node.name === this.name)?.node.sessionId;
 
         if (sessionId) headers['Session-Id'] = sessionId;
         this.emit('debug', `[Socket] -> [${this.name}] : Connecting ${this.url}, Version: ${this.version}, Trying to resume? ${!!sessionId}`);
@@ -221,7 +223,7 @@ export class Node extends EventEmitter {
         this.ws.once('close', (...args) => this.close(...args));
         this.ws.on('error', error => this.error(error));
         this.ws.on('message', data => this.message(data).catch(error => this.error(error)));
-    };
+    }
 
     /**
      * Disconnect from lavalink
@@ -238,7 +240,7 @@ export class Node extends EventEmitter {
             this.ws.close(code, reason);
         else
             this.clean();
-    };
+    }
 
     /**
      * Handle connection open event from Lavalink
@@ -250,7 +252,7 @@ export class Node extends EventEmitter {
         this.emit('debug', `[Socket] <-> [${this.name}] : Connection Handshake Done! ${this.url} | Upgrade Headers Resumed: ${resumed}`);
         this.reconnects = 0;
         this.state = State.NEARLY;
-    };
+    }
 
     /**
      * Handle message from Lavalink
@@ -281,13 +283,13 @@ export class Node extends EventEmitter {
                         this.emit('debug', `[${this.name}] -> [Player] : Trying to re-create players from the last session`);
                         await this.manager.restorePlayers(this);
                         this.emit('debug', `[${this.name}] <-> [Player]: Session restore completed`);
-                    };
-                };
+                    }
+                }
 
                 this.manager.connectingNodes.splice(this.manager.connectingNodes.indexOf(this.manager.connectingNodes.find(e => e.name === this.name)!), 1);
 
-                this.emit('ready', [...this.manager.reconnectingPlayers.values()].filter(player => player.state?.node === this.name && player.state.restored)?.length ?? 0);
-                [...this.manager.reconnectingPlayers.values()]?.filter(player => player.state?.node === this.name).forEach(dump => this.manager.reconnectingPlayers.delete(dump.options.guildId));
+                this.emit('ready', [ ...this.manager.reconnectingPlayers.values() ].filter(player => player.state?.node === this.name && player.state.restored)?.length ?? 0);
+                [ ...this.manager.reconnectingPlayers.values() ]?.filter(player => player.state?.node === this.name).forEach(dump => this.manager.reconnectingPlayers.delete(dump.options.guildId));
 
                 break;
             case OpCodes.EVENT:
@@ -301,8 +303,8 @@ export class Node extends EventEmitter {
                 break;
             default:
                 this.emit('debug', `[Player] -> [Node] : Unknown Message OP ${json.op}`);
-        };
-    };
+        }
+    }
 
     /**
      * Handle closed event from lavalink
@@ -317,7 +319,7 @@ export class Node extends EventEmitter {
             this.manager.restorePlayers(this);
             this.clean();
         } else this.reconnect();
-    };
+    }
 
     /**
      * To emit error events easily
@@ -325,7 +327,7 @@ export class Node extends EventEmitter {
      */
     public error(error: Error | unknown): void {
         this.emit('error', error);
-    };
+    }
 
     /**
      * Destroys the websocket connection
@@ -339,7 +341,7 @@ export class Node extends EventEmitter {
         if (!this.shouldClean) return;
         this.destroyed = true;
         this.emit('disconnect', move, count);
-    };
+    }
 
     /**
      * Cleans and moves players to other nodes if possible
@@ -359,8 +361,8 @@ export class Node extends EventEmitter {
             this.error(error);
         } finally {
             this.destroy(move, count);
-        };
-    };
+        }
+    }
 
     /**
      * Reconnect to Lavalink
@@ -375,15 +377,15 @@ export class Node extends EventEmitter {
         this.emit('debug', `[Socket] -> [${this.name}] : Reconnecting in ${this.manager.options.reconnectInterval} seconds. ${this.manager.options.reconnectTries - this.reconnects} tries left`);
         await wait(this.manager.options.reconnectInterval * 1000);
         this.connect();
-    };
+    }
 
     /**
      * Tries to move the players to another node
      * @internal
      */
     private async movePlayers(): Promise<number> {
-        const players = [...this.players.values()];
+        const players = [ ...this.players.values() ];
         const data = await Promise.allSettled(players.map(player => player.move()));
         return data.filter(results => results.status === 'fulfilled').length;
-    };
-};
+    }
+}

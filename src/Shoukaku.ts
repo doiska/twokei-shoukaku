@@ -16,7 +16,7 @@ export interface Structures {
      * A custom structure that extends the Player class
      */
     player?: Constructor<Player>;
-};
+}
 
 export interface NodeOption {
     /**
@@ -39,7 +39,7 @@ export interface NodeOption {
      * Group of this node
      */
     group?: string;
-};
+}
 
 export interface ShoukakuOptions {
     /**
@@ -78,7 +78,7 @@ export interface ShoukakuOptions {
      * Timeout before abort connection
      */
     voiceConnectionTimeout?: number;
-};
+}
 
 export interface VoiceChannelOptions {
     guildId: string;
@@ -87,7 +87,7 @@ export interface VoiceChannelOptions {
     deaf?: boolean;
     mute?: boolean;
     getNode?: (node: Map<string, Node>, connection: Connection) => Node | undefined;
-};
+}
 
 export interface MergedShoukakuOptions {
     resume: boolean;
@@ -99,7 +99,7 @@ export interface MergedShoukakuOptions {
     userAgent: string;
     structures: Structures;
     voiceConnectionTimeout: number;
-};
+}
 
 export interface PlayerDump {
     node: {
@@ -120,7 +120,7 @@ export interface PlayerDump {
         node: string;
     };
     timestamp: number;
-};
+}
 
 export declare interface Shoukaku {
     /**
@@ -172,7 +172,7 @@ export declare interface Shoukaku {
     off(event: 'close', listener: (name: string, code: number, reason: string) => void): this;
     off(event: 'disconnect', listener: (name: string, moved: boolean, count: number) => void): this;
     off(event: 'raw', listener: (name: string, json: unknown) => void): this;
-};
+}
 
 /**
  * Main Shoukaku class
@@ -210,6 +210,7 @@ export class Shoukaku extends EventEmitter {
      * @param connector A Discord library connector
      * @param nodes An array that conforms to the NodeOption type that specifies nodes to connect to
      * @param options Options to pass to create this Shoukaku instance
+     * @param dumps
      * @param options.resume Whether to resume a connection on disconnect to Lavalink (Server Side) (Note: DOES NOT RESUME WHEN THE LAVALINK SERVER DIES)
      * @param options.resumeTimeout Time to wait before lavalink starts to destroy the players of the disconnected client
      * @param options.reconnectTries Number of times to try and reconnect to Lavalink before giving up
@@ -219,7 +220,7 @@ export class Shoukaku extends EventEmitter {
      * @param options.userAgent User Agent to use when making requests to Lavalink
      * @param options.structures Custom structures for shoukaku to use
      */
-    constructor(connector: Connector, nodes: NodeOption[], options: ShoukakuOptions = {}, dumps?: [String, PlayerDump][]) {
+    constructor(connector: Connector, nodes: NodeOption[], options: ShoukakuOptions = {}, dumps: [String, PlayerDump][] = []) {
         super();
         this.connector = connector.set(this);
         this.options = mergeDefault(ShoukakuDefaults, options);
@@ -229,7 +230,7 @@ export class Shoukaku extends EventEmitter {
         this.connector.listen(nodes);
         this.reconnectingPlayers = new Map<String, PlayerDump>(dumps);
         this.connectingNodes = [];
-    };
+    }
 
     /**
      * Get a list of players
@@ -239,11 +240,11 @@ export class Shoukaku extends EventEmitter {
     get players(): Map<string, Player> {
         const players = new Map();
         for (const node of this.nodes.values()) {
-            for (const [id, player] of node.players) players.set(id, player);
-        };
+            for (const [ id, player ] of node.players) players.set(id, player);
+        }
 
         return players;
-    };
+    }
 
     /**
      * Get dumped players data that you will need in case of a restart
@@ -255,7 +256,7 @@ export class Shoukaku extends EventEmitter {
             const players = new Map() as Map<string, PlayerDump>;
 
             for (const node of this.nodes.values()) {
-                for (const [id, player] of node.players) {
+                for (const [ id, player ] of node.players) {
                     if (!player.connection.serverUpdate?.token || !player.connection.serverUpdate?.endpoint) continue;
 
                     players.set(id, {
@@ -274,21 +275,23 @@ export class Shoukaku extends EventEmitter {
                         player: player.playerData.playerOptions,
                         timestamp: Date.now()
                     });
-                };
-            };
+                }
+            }
 
             return players;
-        } catch (error) { throw error };
-    };
+        } catch (error) {
+            throw error;
+        }
+    }
 
     /**
      * Restore players from previous session
-     * @param players playersDump from saved session
      * @throws {Error} Will throw catched error if something went wrong
+     * @param node
      */
     async restorePlayers(node: Node): Promise<void> {
         try {
-            const playerDumps = [...this.reconnectingPlayers.values()].filter((player: PlayerDump) => player.node.name === node.name || player.node.group === node.group);
+            const playerDumps = [ ...this.reconnectingPlayers.values() ].filter((player: PlayerDump) => player.node.name === node.name || player.node.group === node.group);
 
             if (!playerDumps || playerDumps.length === 0) node.emit('debug', `[${node.name}] <- [Player] : Restore canceled due to missing data`);
 
@@ -299,7 +302,7 @@ export class Shoukaku extends EventEmitter {
                     node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
                     node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
                     continue;
-                };
+                }
 
                 const player = await this.joinVoiceChannel({
                     guildId: dump.options.guildId,
@@ -307,7 +310,9 @@ export class Shoukaku extends EventEmitter {
                     channelId: dump.options.channelId,
                     deaf: dump.options.deaf ?? false,
                     mute: dump.options.mute ?? false,
-                    getNode: () => { return node }
+                    getNode: () => {
+                        return node;
+                    }
                 });
 
                 dump.player.voice = { token: player.connection.serverUpdate!.token, endpoint: player.connection.serverUpdate!.endpoint, sessionId: player.connection.sessionId as string };
@@ -331,9 +336,11 @@ export class Shoukaku extends EventEmitter {
                 dump.state = { restored: true, node: node.name };
                 node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: dump.state, guildId: dump.options.guildId });
                 node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: dump.state, guildId: dump.options.guildId });
-            };
-        } catch (error) { throw error };
-    };
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
 
     /**
      * Add a Lavalink node to the pool of available nodes
@@ -355,7 +362,7 @@ export class Shoukaku extends EventEmitter {
         node.connect();
         this.nodes.set(node.name, node);
         this.connectingNodes.push(options);
-    };
+    }
 
     /**
      * Remove a Lavalink node from the pool of available nodes
@@ -366,7 +373,7 @@ export class Shoukaku extends EventEmitter {
         const node = this.nodes.get(name);
         if (!node) throw new Error('The node name you specified doesn\'t exist');
         node.disconnect(1000, reason);
-    };
+    }
 
     /**
      * Joins a voice channel
@@ -391,7 +398,7 @@ export class Shoukaku extends EventEmitter {
         } catch (error) {
             this.connections.delete(options.guildId);
             throw error;
-        };
+        }
 
         try {
             const node = options.getNode(this.nodes, connection);
@@ -405,15 +412,15 @@ export class Shoukaku extends EventEmitter {
             } catch (error) {
                 node.players.delete(options.guildId);
                 throw error;
-            };
+            }
 
             connection.established = true;
             return player;
         } catch (error) {
             connection.disconnect();
             throw error;
-        };
-    };
+        }
+    }
 
     /**
      * Leaves a voice channel
@@ -427,18 +434,18 @@ export class Shoukaku extends EventEmitter {
         const player = this.players.get(guildId);
         if (player) await player.destroyPlayer(true);
         return player;
-    };
+    }
 
     /**
      * Gets the Lavalink node the least penalty score
      * @returns A Lavalink node or undefined if there are no nodes ready
      */
     public getIdealNode(): Node | undefined {
-        return [...this.nodes.values()]
+        return [ ...this.nodes.values() ]
             .filter(node => node.state === State.CONNECTED)
             .sort((a, b) => a.penalties - b.penalties)
             .shift();
-    };
+    }
 
     /**
      * Cleans the disconnected lavalink node
@@ -451,5 +458,5 @@ export class Shoukaku extends EventEmitter {
         node.removeAllListeners();
         this.nodes.delete(node.name);
         this.emit('disconnect', node.name, ...args);
-    };
-};
+    }
+}

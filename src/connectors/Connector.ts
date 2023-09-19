@@ -5,9 +5,9 @@ import { NodeOption, Shoukaku } from '../Shoukaku';
 export interface ConnectorMethods {
     sendPacket: any;
     getId: any;
-};
+}
 
-export const AllowedPackets = ['VOICE_STATE_UPDATE', 'VOICE_SERVER_UPDATE'];
+export const AllowedPackets = [ 'VOICE_STATE_UPDATE', 'VOICE_SERVER_UPDATE' ];
 
 export abstract class Connector {
     protected readonly client: any;
@@ -16,17 +16,17 @@ export abstract class Connector {
     constructor(client: any) {
         this.client = client;
         this.manager = null;
-    };
+    }
 
     public set(manager: Shoukaku): Connector {
         this.manager = manager;
         return this;
-    };
+    }
 
     protected ready(nodes: NodeOption[]): void {
         this.manager!.id = this.getId();
         for (const node of nodes) this.manager!.addNode(mergeDefault(NodeDefaults, node));
-    };
+    }
 
     protected raw(packet: any): void {
         if (!AllowedPackets.includes(packet.t)) return;
@@ -44,17 +44,17 @@ export abstract class Connector {
 
             player.sendServerUpdate().catch(error => this.manager!.on('error', error));
             return;
-        };
+        }
 
         const userId = packet.d.user_id;
         if (userId !== this.manager!.id) return;
 
         connection.setStateUpdate(packet.d);
-    };
+    }
 
     abstract getId(): string;
 
     abstract sendPacket(shardId: number, payload: any, important: boolean): void;
 
     abstract listen(nodes: NodeOption[]): void;
-};
+}

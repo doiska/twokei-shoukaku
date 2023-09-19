@@ -8,14 +8,14 @@ export enum State {
     RECONNECTING,
     DISCONNECTING,
     DISCONNECTED
-};
+}
 
 export enum VoiceState {
     SESSION_READY,
     SESSION_ID_MISSING,
     SESSION_ENDPOINT_MISSING,
     SESSION_FAILED_UPDATE
-};
+}
 
 export enum OpCodes {
     PLAYER_UPDATE = 'playerUpdate',
@@ -23,12 +23,12 @@ export enum OpCodes {
     STATS = 'stats',
     EVENT = 'event',
     READY = 'ready'
-};
+}
 
 export enum Versions {
     REST_VERSION = 4,
     WEBSOCKET_VERSION = 4
-};
+}
 
 export const ShoukakuDefaults: ShoukakuOptions = {
     resume: false,
