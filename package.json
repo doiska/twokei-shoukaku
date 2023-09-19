@@ -1,7 +1,7 @@
 {
   "name": "@twokei/shoukaku",
   "version": "4.1.4",
-  "description": "Forked Shoukaku module with player.info option and session dump & recovery",
+  "description": "Forked Shoukaku module with session dump & recovery",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
