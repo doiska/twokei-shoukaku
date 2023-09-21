@@ -158,6 +158,13 @@ export declare interface Shoukaku {
      * @eventProperty
      */
     on(event: 'raw', listener: (name: string, json: unknown) => void): this;
+
+    /**
+     * Emitted after all players have been restored
+     * @eventProperty
+     */
+    on(event: 'restored', listener: (dump: PlayerDump[]) => void): this;
+
     once(event: 'reconnecting', listener: (name: string, reconnectsLeft: number, reconnectInterval: number) => void): this;
     once(event: 'debug', listener: (name: string, info: string) => void): this;
     once(event: 'error', listener: (name: string, error: Error) => void): this;
@@ -337,6 +344,8 @@ export class Shoukaku extends EventEmitter {
                 node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: dump.state, guildId: dump.options.guildId });
                 node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: dump.state, guildId: dump.options.guildId });
             }
+
+            this.emit('restored', playerDumps);
         } catch (error) {
             throw error;
         }
