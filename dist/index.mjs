@@ -1377,6 +1377,7 @@ var Shoukaku = class extends EventEmitter4 {
         node.emit("raw", { op: "playerRestore" /* PLAYER_RESTORE */, state: dump.state, guildId: dump.options.guildId });
         node.emit("restore", { op: "playerRestore" /* PLAYER_RESTORE */, state: dump.state, guildId: dump.options.guildId });
       }
+      this.emit("restored", playerDumps);
     } catch (error) {
       throw error;
     }
