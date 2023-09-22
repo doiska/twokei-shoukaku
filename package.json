@@ -1,6 +1,6 @@
 {
   "name": "@twokei/shoukaku",
-  "version": "4.1.4",
+  "version": "1.0.0",
   "description": "Forked Shoukaku module with session dump & recovery",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -64,5 +64,8 @@
     "tsup": "^6.7.0",
     "typedoc": "^0.24.8",
     "typescript": "^5.1.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -119,6 +119,9 @@ var package_default = {
     tsup: "^6.7.0",
     typedoc: "^0.24.8",
     typescript: "^5.1.3"
+  },
+  publishConfig: {
+    access: "public"
   }
 };
 
