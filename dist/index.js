@@ -95,7 +95,7 @@ __export(Constants_exports, {
 // package.json
 var package_default = {
   name: "@twokei/shoukaku",
-  version: "4.1.4",
+  version: "1.0.0",
   description: "Forked Shoukaku module with session dump & recovery",
   main: "dist/index.js",
   module: "dist/index.mjs",
@@ -122,8 +122,7 @@ var package_default = {
     "discord",
     "lavalink.js",
     "discord.js",
-    "lavalink-api",
-    "weeb-library"
+    "lavalink-api"
   ],
   engines: {
     node: ">=18.0.0",

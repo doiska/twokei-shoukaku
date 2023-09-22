@@ -163,7 +163,7 @@ export declare interface Shoukaku {
      * Emitted after all players have been restored
      * @eventProperty
      */
-
+    on(event: 'restored', listener: (dump: PlayerDump[]) => void): this;
     once(event: 'restored', listener: (dump: PlayerDump[]) => void): this;
     once(event: 'reconnecting', listener: (name: string, reconnectsLeft: number, reconnectInterval: number) => void): this;
     once(event: 'debug', listener: (name: string, info: string) => void): this;
@@ -172,6 +172,8 @@ export declare interface Shoukaku {
     once(event: 'close', listener: (name: string, code: number, reason: string) => void): this;
     once(event: 'disconnect', listener: (name: string, moved: boolean, count: number) => void): this;
     once(event: 'raw', listener: (name: string, json: unknown) => void): this;
+
+    off(event: 'restored', listener: (dump: PlayerDump[]) => void): this;
     off(event: 'reconnecting', listener: (name: string, reconnectsLeft: number, reconnectInterval: number) => void): this;
     off(event: 'debug', listener: (name: string, info: string) => void): this;
     off(event: 'error', listener: (name: string, error: Error) => void): this;

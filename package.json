@@ -27,8 +27,7 @@
     "discord",
     "lavalink.js",
     "discord.js",
-    "lavalink-api",
-    "weeb-library"
+    "lavalink-api"
   ],
   "engines": {
     "node": ">=18.0.0",
