@@ -375,7 +375,7 @@ export class Player extends EventEmitter {
         this.paused = paused;
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { paused: true, info: this.info }
+            playerOptions: { paused: paused, info: this.info }
         });
     }
 
