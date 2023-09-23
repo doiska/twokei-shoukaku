@@ -55,7 +55,7 @@ __export(Constants_exports, {
 // package.json
 var package_default = {
   name: "@twokei/shoukaku",
-  version: "1.0.0",
+  version: "1.0.1",
   description: "Forked Shoukaku module with session dump & recovery",
   main: "dist/index.js",
   module: "dist/index.mjs",
@@ -548,7 +548,7 @@ var Player = class extends EventEmitter2 {
     this.paused = paused;
     await this.node.rest.updatePlayer({
       guildId: this.guildId,
-      playerOptions: { paused: true, info: this.info }
+      playerOptions: { paused }
     });
   }
   /**
@@ -559,7 +559,7 @@ var Player = class extends EventEmitter2 {
     this.position = position;
     await this.node.rest.updatePlayer({
       guildId: this.guildId,
-      playerOptions: { position, info: this.info }
+      playerOptions: { position }
     });
   }
   /**
@@ -570,7 +570,7 @@ var Player = class extends EventEmitter2 {
     this.volume = volume;
     await this.node.rest.updatePlayer({
       guildId: this.guildId,
-      playerOptions: { volume: this.volume, info: this.info }
+      playerOptions: { volume: this.volume }
     });
   }
   /**
