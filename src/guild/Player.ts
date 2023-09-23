@@ -375,7 +375,7 @@ export class Player extends EventEmitter {
         this.paused = paused;
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { paused: paused, info: this.info }
+            playerOptions: { paused: paused }
         });
     }
 
@@ -387,7 +387,7 @@ export class Player extends EventEmitter {
         this.position = position;
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { position: position, info: this.info }
+            playerOptions: { position: position  }
         });
     }
 
@@ -399,7 +399,7 @@ export class Player extends EventEmitter {
         this.volume = volume;
         await this.node.rest.updatePlayer({
             guildId: this.guildId,
-            playerOptions: { volume: this.volume, info: this.info }
+            playerOptions: { volume: this.volume  }
         });
     }
 
