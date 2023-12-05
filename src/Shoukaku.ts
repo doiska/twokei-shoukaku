@@ -302,10 +302,16 @@ export class Shoukaku extends EventEmitter {
         try {
             const playerDumps = [ ...this.reconnectingPlayers.values() ].filter((player: PlayerDump) => player.node.name === node.name || player.node.group === node.group);
 
-            if (!playerDumps || playerDumps.length === 0) node.emit('debug', `[${node.name}] <- [Player] : Restore canceled due to missing data`);
+            if (!playerDumps || playerDumps.length === 0) {
+                node.emit('debug', `[${node.name}] <- [Player] : Restore canceled due to missing data`);
+                return;
+            }
 
             for (const dump of playerDumps) {
-                if (dump.timestamp + (this.options.reconnectInterval * 1000) < Date.now() || this.connectingNodes.filter(n => n?.group === node?.group).length === 0 || node.state !== State.CONNECTED) {
+
+                const isNodeAvailable = this.connectingNodes.filter(n => n?.group === node?.group).length > 0;
+
+                if (dump.timestamp + (this.options.reconnectInterval * 1000) < Date.now() || isNodeAvailable || node.state !== State.CONNECTED) {
                     node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because session is expired or there are no suitable nodes available`);
 
                     node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
@@ -324,7 +330,11 @@ export class Shoukaku extends EventEmitter {
                     }
                 });
 
-                dump.player.voice = { token: player.connection.serverUpdate!.token, endpoint: player.connection.serverUpdate!.endpoint, sessionId: player.connection.sessionId as string };
+                dump.player.voice = {
+                    token: player.connection.serverUpdate!.token,
+                    endpoint: player.connection.serverUpdate!.endpoint,
+                    sessionId: player.connection.sessionId as string
+                };
 
                 player.connection.setStateUpdate({
                     channel_id: dump.options.channelId,
