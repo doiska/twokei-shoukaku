@@ -138,6 +138,7 @@ export class Connection extends EventEmitter {
         this.channelId = null;
         this.deafened = false;
         this.muted = false;
+        this.removeAllListeners();
         this.sendVoiceUpdate();
         this.manager.connections.delete(this.guildId);
         this.state = State.DISCONNECTED;
