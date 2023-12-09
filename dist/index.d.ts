@@ -580,7 +580,7 @@ interface TrackInfo {
     identifier: string;
     isSeekable: boolean;
     author: string;
-    duration: number;
+    length: number;
     isStream: boolean;
     position: number;
     title: string;

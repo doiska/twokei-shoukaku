@@ -95,7 +95,7 @@ __export(Constants_exports, {
 // package.json
 var package_default = {
   name: "@twokei/shoukaku",
-  version: "1.0.1",
+  version: "1.0.2",
   description: "Forked Shoukaku module with session dump & recovery",
   main: "dist/index.js",
   module: "dist/index.mjs",
@@ -360,6 +360,7 @@ var Connection = class extends import_events.EventEmitter {
     this.channelId = null;
     this.deafened = false;
     this.muted = false;
+    this.removeAllListeners();
     this.sendVoiceUpdate();
     this.manager.connections.delete(this.guildId);
     this.state = 5 /* DISCONNECTED */;
@@ -1382,10 +1383,13 @@ var Shoukaku = class extends import_events4.EventEmitter {
   async restorePlayers(node) {
     try {
       const playerDumps = [...this.reconnectingPlayers.values()].filter((player) => player.node.name === node.name || player.node.group === node.group);
-      if (!playerDumps || playerDumps.length === 0)
+      if (!playerDumps || playerDumps.length === 0) {
         node.emit("debug", `[${node.name}] <- [Player] : Restore canceled due to missing data`);
+        return;
+      }
       for (const dump of playerDumps) {
-        if (dump.timestamp + this.options.reconnectInterval * 1e3 < Date.now() || this.connectingNodes.filter((n) => n?.group === node?.group).length === 0 || node.state !== 2 /* CONNECTED */) {
+        const isNodeAvailable = this.connectingNodes.filter((n) => n?.group === node?.group).length > 0;
+        if (dump.timestamp + this.options.reconnectInterval * 1e3 < Date.now() || isNodeAvailable || node.state !== 2 /* CONNECTED */) {
           node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because session is expired or there are no suitable nodes available`);
           node.emit("raw", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
           node.emit("restore", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
@@ -1401,7 +1405,11 @@ var Shoukaku = class extends import_events4.EventEmitter {
             return node;
           }
         });
-        dump.player.voice = { token: player.connection.serverUpdate.token, endpoint: player.connection.serverUpdate.endpoint, sessionId: player.connection.sessionId };
+        dump.player.voice = {
+          token: player.connection.serverUpdate.token,
+          endpoint: player.connection.serverUpdate.endpoint,
+          sessionId: player.connection.sessionId
+        };
         player.connection.setStateUpdate({
           channel_id: dump.options.channelId,
           session_id: dump.player.voice?.sessionId,
