@@ -311,8 +311,25 @@ export class Shoukaku extends EventEmitter {
 
                 const isNodeAvailable = this.connectingNodes.filter(n => n?.group === node?.group).length > 0;
 
-                if (dump.timestamp + (this.options.reconnectInterval * 1000) < Date.now() || isNodeAvailable || node.state !== State.CONNECTED) {
-                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because session is expired or there are no suitable nodes available`);
+                node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Restoring session`);
+                node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : The node ${node.name} is ${isNodeAvailable ? 'available' : 'not available'}.`);
+
+                if(!isNodeAvailable) {
+                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because there are no suitable nodes available`);
+                    continue;
+                }
+
+                const isSessionExpired = dump.timestamp + (this.options.reconnectInterval * 1000) < Date.now();
+
+                if(isSessionExpired) {
+                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because session is expired`);
+                    node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
+                    node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
+                    continue;
+                }
+
+                if (node.state !== State.CONNECTED) {
+                    node.emit('debug', `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because node is not connected`);
 
                     node.emit('raw', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });
                     node.emit('restore', { op: OpCodes.PLAYER_RESTORE, state: { restored: false }, guildId: dump.options.guildId });

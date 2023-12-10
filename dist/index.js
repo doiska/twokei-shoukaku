@@ -1389,8 +1389,21 @@ var Shoukaku = class extends import_events4.EventEmitter {
       }
       for (const dump of playerDumps) {
         const isNodeAvailable = this.connectingNodes.filter((n) => n?.group === node?.group).length > 0;
-        if (dump.timestamp + this.options.reconnectInterval * 1e3 < Date.now() || isNodeAvailable || node.state !== 2 /* CONNECTED */) {
-          node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because session is expired or there are no suitable nodes available`);
+        node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Restoring session`);
+        node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Checking if node is available ${isNodeAvailable ? "\u2705" : "\u274C"}`);
+        if (!isNodeAvailable) {
+          node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because there are no suitable nodes available`);
+          continue;
+        }
+        const isSessionExpired = dump.timestamp + this.options.reconnectInterval * 1e3 < Date.now();
+        if (isSessionExpired) {
+          node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because session is expired`);
+          node.emit("raw", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
+          node.emit("restore", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
+          continue;
+        }
+        if (node.state !== 2 /* CONNECTED */) {
+          node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because node is not connected`);
           node.emit("raw", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
           node.emit("restore", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
           continue;
