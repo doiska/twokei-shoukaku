@@ -1,6 +1,6 @@
 {
   "name": "@twokei/shoukaku",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Forked Shoukaku module with session dump & recovery",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

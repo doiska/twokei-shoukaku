@@ -2,12 +2,12 @@ import Info from '../package.json';
 import { NodeOption, ShoukakuOptions } from './Shoukaku';
 
 export enum State {
-    CONNECTING,
-    NEARLY,
-    CONNECTED,
-    RECONNECTING,
-    DISCONNECTING,
-    DISCONNECTED
+    CONNECTING = 'CONNECTING',
+    NEARLY = 'NEARLY',
+    CONNECTED = 'CONNECTED',
+    RECONNECTING = 'RECONNECTING',
+    DISCONNECTING = 'DISCONNECTING',
+    DISCONNECTED = 'DISCONNECTED'
 }
 
 export enum VoiceState {

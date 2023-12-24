@@ -2,12 +2,12 @@ import Websocket from 'ws';
 import { EventEmitter } from 'events';
 
 declare enum State {
-    CONNECTING = 0,
-    NEARLY = 1,
-    CONNECTED = 2,
-    RECONNECTING = 3,
-    DISCONNECTING = 4,
-    DISCONNECTED = 5
+    CONNECTING = "CONNECTING",
+    NEARLY = "NEARLY",
+    CONNECTED = "CONNECTED",
+    RECONNECTING = "RECONNECTING",
+    DISCONNECTING = "DISCONNECTING",
+    DISCONNECTED = "DISCONNECTED"
 }
 declare enum VoiceState {
     SESSION_READY = 0,

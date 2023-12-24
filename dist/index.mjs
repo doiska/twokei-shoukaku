@@ -55,7 +55,7 @@ __export(Constants_exports, {
 // package.json
 var package_default = {
   name: "@twokei/shoukaku",
-  version: "1.0.2",
+  version: "1.0.4",
   description: "Forked Shoukaku module with session dump & recovery",
   main: "dist/index.js",
   module: "dist/index.mjs",
@@ -126,12 +126,12 @@ var package_default = {
 
 // src/Constants.ts
 var State = /* @__PURE__ */ ((State2) => {
-  State2[State2["CONNECTING"] = 0] = "CONNECTING";
-  State2[State2["NEARLY"] = 1] = "NEARLY";
-  State2[State2["CONNECTED"] = 2] = "CONNECTED";
-  State2[State2["RECONNECTING"] = 3] = "RECONNECTING";
-  State2[State2["DISCONNECTING"] = 4] = "DISCONNECTING";
-  State2[State2["DISCONNECTED"] = 5] = "DISCONNECTED";
+  State2["CONNECTING"] = "CONNECTING";
+  State2["NEARLY"] = "NEARLY";
+  State2["CONNECTED"] = "CONNECTED";
+  State2["RECONNECTING"] = "RECONNECTING";
+  State2["DISCONNECTING"] = "DISCONNECTING";
+  State2["DISCONNECTED"] = "DISCONNECTED";
   return State2;
 })(State || {});
 var VoiceState = /* @__PURE__ */ ((VoiceState2) => {
@@ -287,7 +287,7 @@ var Connection = class extends EventEmitter {
     this.deafened = options.deaf ?? false;
     this.sessionId = null;
     this.region = null;
-    this.state = 5 /* DISCONNECTED */;
+    this.state = "DISCONNECTED" /* DISCONNECTED */;
     this.moved = false;
     this.reconnecting = false;
     this.established = false;
@@ -323,7 +323,7 @@ var Connection = class extends EventEmitter {
     this.removeAllListeners();
     this.sendVoiceUpdate();
     this.manager.connections.delete(this.guildId);
-    this.state = 5 /* DISCONNECTED */;
+    this.state = "DISCONNECTED" /* DISCONNECTED */;
     this.debug(`[Voice] -> [Node] & [Discord] : Connection Destroyed | Guild: ${this.guildId}`);
   }
   /**
@@ -331,7 +331,7 @@ var Connection = class extends EventEmitter {
    * @internal
    */
   async connect() {
-    this.state = 0 /* CONNECTING */;
+    this.state = "CONNECTING" /* CONNECTING */;
     this.sendVoiceUpdate();
     this.debug(`[Voice] -> [Discord] : Requesting Connection | Guild: ${this.guildId}`);
     const controller = new AbortController();
@@ -346,7 +346,7 @@ var Connection = class extends EventEmitter {
             throw new Error("The voice connection is not established due to missing connection endpoint");
         }
       }
-      this.state = 2 /* CONNECTED */;
+      this.state = "CONNECTED" /* CONNECTED */;
     } catch (error) {
       this.debug(`[Voice] </- [Discord] : Request Connection Failed | Guild: ${this.guildId}`);
       if (error.name === "AbortError")
@@ -373,7 +373,7 @@ var Connection = class extends EventEmitter {
     }
     this.channelId = channel_id || this.channelId;
     if (!channel_id) {
-      this.state = 5 /* DISCONNECTED */;
+      this.state = "DISCONNECTED" /* DISCONNECTED */;
       this.debug(`[Voice] <- [Discord] : Channel Disconnected | Guild: ${this.guildId}`);
     }
     this.deafened = self_deaf;
@@ -474,7 +474,7 @@ var Player = class extends EventEmitter2 {
       const node = this.node.manager.nodes.get(name) || this.connection.getNode(this.connection.manager.nodes, this.connection);
       if (!node)
         throw new Error("No node available to move to");
-      if (node.state !== 2 /* CONNECTED */)
+      if (node.state !== "CONNECTED" /* CONNECTED */)
         throw new Error("Tried to move to a node that is not connected");
       if (node.name === this.node.name)
         throw new Error("Tried to move to the same node where the current player is connected on");
@@ -1045,7 +1045,7 @@ var Node = class extends EventEmitter3 {
     this.url = `${options.secure ? "wss" : "ws"}://${options.url}`;
     this.auth = options.auth;
     this.reconnects = 0;
-    this.state = 5 /* DISCONNECTED */;
+    this.state = "DISCONNECTED" /* DISCONNECTED */;
     this.stats = null;
     this.info = null;
     this.ws = null;
@@ -1084,7 +1084,7 @@ var Node = class extends EventEmitter3 {
       throw new Error("Don't connect a node when the library is not yet ready");
     if (this.destroyed)
       throw new Error("You can't re-use the same instance of a node once disconnected, please re-add the node again");
-    this.state = 0 /* CONNECTING */;
+    this.state = "CONNECTING" /* CONNECTING */;
     const headers = {
       "Client-Name": this.manager.options.userAgent,
       "User-Agent": this.manager.options.userAgent,
@@ -1113,7 +1113,7 @@ var Node = class extends EventEmitter3 {
     if (this.destroyed)
       return;
     this.destroyed = true;
-    this.state = 4 /* DISCONNECTING */;
+    this.state = "DISCONNECTING" /* DISCONNECTING */;
     if (this.ws)
       this.ws.close(code, reason);
     else
@@ -1128,7 +1128,7 @@ var Node = class extends EventEmitter3 {
     const resumed = response.headers["session-resumed"] === "true";
     this.emit("debug", `[Socket] <-> [${this.name}] : Connection Handshake Done! ${this.url} | Upgrade Headers Resumed: ${resumed}`);
     this.reconnects = 0;
-    this.state = 1 /* NEARLY */;
+    this.state = "NEARLY" /* NEARLY */;
   }
   /**
    * Handle message from Lavalink
@@ -1149,7 +1149,7 @@ var Node = class extends EventEmitter3 {
         break;
       case "ready" /* READY */:
         this.sessionId = json.sessionId;
-        this.state = 2 /* CONNECTED */;
+        this.state = "CONNECTED" /* CONNECTED */;
         this.emit("debug", `[Socket] -> [${this.name}] : Lavalink is ready! | Lavalink resume: ${json.resumed}`);
         if (this.manager.options.resume) {
           await this.rest.updateSession(this.manager.options.resume, this.manager.options.resumeTimeout);
@@ -1207,7 +1207,7 @@ var Node = class extends EventEmitter3 {
     this.ws?.removeAllListeners();
     this.ws?.close();
     this.ws = null;
-    this.state = 5 /* DISCONNECTED */;
+    this.state = "DISCONNECTED" /* DISCONNECTED */;
     if (!this.shouldClean)
       return;
     this.destroyed = true;
@@ -1237,11 +1237,11 @@ var Node = class extends EventEmitter3 {
    * @internal
    */
   async reconnect() {
-    if (this.state === 3 /* RECONNECTING */)
+    if (this.state === "RECONNECTING" /* RECONNECTING */)
       return;
-    if (this.state !== 5 /* DISCONNECTED */)
+    if (this.state !== "DISCONNECTED" /* DISCONNECTED */)
       this.destroy(false);
-    this.state = 3 /* RECONNECTING */;
+    this.state = "RECONNECTING" /* RECONNECTING */;
     this.reconnects++;
     this.emit("reconnecting", this.manager.options.reconnectTries - this.reconnects, this.manager.options.reconnectInterval);
     this.emit("debug", `[Socket] -> [${this.name}] : Reconnecting in ${this.manager.options.reconnectInterval} seconds. ${this.manager.options.reconnectTries - this.reconnects} tries left`);
@@ -1350,7 +1350,7 @@ var Shoukaku = class extends EventEmitter4 {
       for (const dump of playerDumps) {
         const isNodeAvailable = this.connectingNodes.filter((n) => n?.group === node?.group).length > 0;
         node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Restoring session`);
-        node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Checking if node is available ${isNodeAvailable ? "\u2705" : "\u274C"}`);
+        node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : The node ${node.name} is ${isNodeAvailable ? "available" : "not available"}.`);
         if (!isNodeAvailable) {
           node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because there are no suitable nodes available`);
           continue;
@@ -1362,7 +1362,7 @@ var Shoukaku = class extends EventEmitter4 {
           node.emit("restore", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
           continue;
         }
-        if (node.state !== 2 /* CONNECTED */) {
+        if (node.state !== "CONNECTED" /* CONNECTED */) {
           node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because node is not connected`);
           node.emit("raw", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
           node.emit("restore", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
@@ -1500,7 +1500,7 @@ var Shoukaku = class extends EventEmitter4 {
    * @returns A Lavalink node or undefined if there are no nodes ready
    */
   getIdealNode() {
-    return [...this.nodes.values()].filter((node) => node.state === 2 /* CONNECTED */).sort((a, b) => a.penalties - b.penalties).shift();
+    return [...this.nodes.values()].filter((node) => node.state === "CONNECTED" /* CONNECTED */).sort((a, b) => a.penalties - b.penalties).shift();
   }
   /**
    * Cleans the disconnected lavalink node
