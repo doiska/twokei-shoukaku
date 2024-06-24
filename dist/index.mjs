@@ -68,11 +68,9 @@ var package_default = {
     }
   },
   scripts: {
-    build: "npm run build:ts && npm run build:docs",
-    "build:ts": "tsup --config tsup-config.json",
-    "build:docs": "typedoc --theme default --readme README.md --out docs/ --entryPointStrategy expand src/.",
+    build: "tsup --config tsup-config.json",
     lint: "eslint --fix --ext .ts",
-    prepare: "npm run build:ts"
+    prepare: "npm run build"
   },
   keywords: [
     "bot",
@@ -1342,20 +1340,22 @@ var Shoukaku = class extends EventEmitter4 {
    */
   async restorePlayers(node) {
     try {
-      const playerDumps = [...this.reconnectingPlayers.values()].filter((player) => player.node.name === node.name || player.node.group === node.group);
+      const playerDumps = [...this.reconnectingPlayers.values()].filter((player) => player.node.name === node.name && player.node.group === node.group);
       if (!playerDumps || playerDumps.length === 0) {
-        node.emit("debug", `[${node.name}] <- [Player] : Restore canceled due to missing data`);
+        node.emit("debug", `[${node.name}] <- [Player] : No players to restore.`);
         return;
       }
       for (const dump of playerDumps) {
-        const isNodeAvailable = this.connectingNodes.filter((n) => n?.group === node?.group).length > 0;
+        const isNodeAvailable = this.connectingNodes.some((n) => n?.name === node?.name);
         node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Restoring session`);
         node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : The node ${node.name} is ${isNodeAvailable ? "available" : "not available"}.`);
         if (!isNodeAvailable) {
           node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because there are no suitable nodes available`);
           continue;
         }
-        const isSessionExpired = dump.timestamp + this.options.reconnectInterval * 1e3 < Date.now();
+        const duration = dump.player.info?.length ?? 0;
+        const isSessionExpired = dump.timestamp + duration < Date.now();
+        node.emit("debug", `Check if session is expired, duration: ${duration}, timestamp: ${dump.timestamp}, now: ${Date.now()}: ${isSessionExpired}`);
         if (isSessionExpired) {
           node.emit("debug", `[${node.name}] <- [Player/${dump.options.guildId}] : Couldn't restore player because session is expired`);
           node.emit("raw", { op: "playerRestore" /* PLAYER_RESTORE */, state: { restored: false }, guildId: dump.options.guildId });
@@ -1378,6 +1378,9 @@ var Shoukaku = class extends EventEmitter4 {
             return node;
           }
         });
+        if (!dump.player.paused) {
+          dump.player.position = Math.max(0, (dump.player.position ?? 0) + (Date.now() - dump.timestamp) + this.options.resumeTimeout * 1e3 - 1e3);
+        }
         dump.player.voice = {
           token: player.connection.serverUpdate.token,
           endpoint: player.connection.serverUpdate.endpoint,
@@ -1449,8 +1452,9 @@ var Shoukaku = class extends EventEmitter4 {
    * @internal
    */
   async joinVoiceChannel(options) {
-    if (this.connections.has(options.guildId))
+    if (this.connections.has(options.guildId)) {
       throw new Error("This guild already have an existing connection");
+    }
     if (!options.getNode)
       options.getNode = this.getIdealNode.bind(this);
     const connection = new Connection(this, options);
